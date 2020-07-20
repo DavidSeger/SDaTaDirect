@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">SDaTaDirect</string>
+    <string name="discover">Discover</string>
+    <string name="peers">Peers</string>
+    <string name="ofOff">ON/OFF</string>
+    <string name="EnableDisoverale">Enable Discoverable</string>
+    <string name="startConnection">Start Connection</string>
+    <string name="send">Send</string>
+    <string name="OnOff">OFF</string>
+    <string name="Scan">Scan</string>
+    <string name="OK">Ok</string>
+</resources>
