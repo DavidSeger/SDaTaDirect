@@ -48,7 +48,7 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
                 Log.d(TAG, e.toString())
             }
             val fileHandler = FileHandler()
-            fileHandler.copyFile(inputStream, outStream)
+            //fileHandler.copyFile(inputStream?.readBytes(), outStream)
             Log.d(TAG, "Client: Data Written")
         } catch (e: IOException) {
             Log.e(TAG, e.message)

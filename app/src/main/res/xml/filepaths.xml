@@ -1,0 +1,5 @@
+<?xml version ="1.0" encoding ="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path path="received/" name="received" />
+    <!-- https://stackoverflow.com/questions/42516126/fileprovider-illegalargumentexception-failed-to-find-configured-root-->
+</paths>

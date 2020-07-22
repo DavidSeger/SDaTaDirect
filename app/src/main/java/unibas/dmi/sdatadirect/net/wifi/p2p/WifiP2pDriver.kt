@@ -1,10 +1,13 @@
 package unibas.dmi.sdatadirect.net.wifi.p2p
 
 import android.annotation.SuppressLint
+import android.app.IntentService
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.LinearGradient
 import android.net.Uri
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
@@ -31,12 +34,12 @@ class WifiP2pDriver (val activity: MainActivity) {
 
     val TAG: String = "WifiP2pDriver"
 
-    /*val manager: WifiP2pManager = activity.getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+    val manager: WifiP2pManager = activity.getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
     var channel: WifiP2pManager.Channel = manager.initialize(activity, activity.mainLooper, null)
-    val receiver: BroadcastReceiver = WifiP2pBroadcastReceiver(this, manager, channel, activity)*/
+    val receiver: BroadcastReceiver = WifiP2pBroadcastReceiver(this, manager, channel, activity)
 
 
-    val manager: WifiP2pManager? by lazy(LazyThreadSafetyMode.NONE) {
+    /*val manager: WifiP2pManager? by lazy(LazyThreadSafetyMode.NONE) {
         activity.getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager?
     }
     var channel: WifiP2pManager.Channel? = null
@@ -47,7 +50,7 @@ class WifiP2pDriver (val activity: MainActivity) {
         channel?.also { channel ->
             receiver = manager?.let { WifiP2pBroadcastReceiver(this, it, channel, activity) }
         }
-    }
+    }*/
 
     var isWifiP2pEnabled: Boolean = true
 
@@ -57,19 +60,23 @@ class WifiP2pDriver (val activity: MainActivity) {
 
     val listView: ListView = activity.findViewById(R.id.peerView)
 
-    val adapter: ArrayAdapter<WifiP2pDevice> = ArrayAdapter(activity.applicationContext,
+    val adapter: ArrayAdapter<WifiP2pDevice> = ArrayAdapter(activity,
         android.R.layout.simple_list_item_1, peers)
 
     lateinit var server: Server
     lateinit var client: Client
     lateinit var sendReceive: SendReceive
 
+    var fileUri: String = ""
+
     var isServer = false
     var isClient = false
 
-    var groupOwnerAddress: String = ""
+    lateinit var groupOwnerAddress: InetAddress
 
-    var wifiP2pDeviceListAdapter: WifiP2pDeviceListAdapter = WifiP2pDeviceListAdapter(activity.applicationContext, R.layout.device_adapter_view, peers)
+    var wifiP2pDeviceListAdapter: WifiP2pDeviceListAdapter = WifiP2pDeviceListAdapter(activity, R.layout.device_adapter_view, peers)
+
+
 
     /**
      * DiscoverPeers detects available peers that are in range. If the discovery was successful,
@@ -115,7 +122,7 @@ class WifiP2pDriver (val activity: MainActivity) {
 
         checkPermission()
 
-        manager?.discoverPeers(channel, object : WifiP2pManager.ActionListener {
+        manager.discoverPeers(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 //...
                 activity.textView.text = "Discovery Started"
@@ -143,9 +150,9 @@ class WifiP2pDriver (val activity: MainActivity) {
             deviceAddress = target.deviceAddress
         }
 
-        manager?.connect(channel, config, object : WifiP2pManager.ActionListener {
+        manager.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                Toast.makeText(activity.applicationContext, "Connected successfully to ${target.deviceName}",
+                Toast.makeText(activity, "Connected successfully to ${target.deviceName}",
                     Toast.LENGTH_SHORT).show()
                 Log.d(TAG, "Connection to [${target.deviceName}, ${target.deviceAddress}] was successful")
             }
@@ -167,7 +174,7 @@ class WifiP2pDriver (val activity: MainActivity) {
         }
 
         if (peers.isEmpty()) {
-            Toast.makeText(activity.applicationContext, "No Device Found", Toast.LENGTH_SHORT)
+            Toast.makeText(activity, "No Device Found", Toast.LENGTH_SHORT)
                 .show()
             Log.d(TAG, "No devices found")
             activity.listView.adapter = wifiP2pDeviceListAdapter
@@ -179,25 +186,26 @@ class WifiP2pDriver (val activity: MainActivity) {
     val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { info ->
 
         val groupOwnerAdress: InetAddress = info.groupOwnerAddress
-        groupOwnerAddress = info.groupOwnerAddress.hostAddress
+        groupOwnerAddress = info.groupOwnerAddress
+        Log.d(TAG, groupOwnerAddress.hostAddress)
 
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            FileServerAsyncTask(activity.applicationContext, activity.textView).execute()
-            //server = Server()
-            //server.start()
-            //isServer = true
+            //FileServerAsyncTask(activity.applicationContext, activity.textView).execute()
+            server = Server(activity.textView)
+            server.start()
+            isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
-            //client = Client(groupOwnerAdress)
-            //client.start()
-            //isClient = true
+            client = Client(groupOwnerAdress, activity.textView)
+            client.start()
+            isClient = true
         }
     }
 
     fun createGroup() {
         checkPermission()
-        manager?.createGroup(channel, object : WifiP2pManager.ActionListener {
+        manager.createGroup(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 println("Connected successfully!")
             }
@@ -210,7 +218,7 @@ class WifiP2pDriver (val activity: MainActivity) {
     }
 
     fun stopWifiP2pDriver() {
-        manager?.stopPeerDiscovery(channel, object: WifiP2pManager.ActionListener {
+        manager.stopPeerDiscovery(channel, object: WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 TODO("Not yet implemented")
             }
@@ -221,7 +229,7 @@ class WifiP2pDriver (val activity: MainActivity) {
 
         })
 
-        manager?.cancelConnect(channel, object : WifiP2pManager.ActionListener {
+        manager.cancelConnect(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 TODO("Not yet implemented")
             }
@@ -232,7 +240,7 @@ class WifiP2pDriver (val activity: MainActivity) {
 
         })
 
-        manager?.removeGroup(channel, object : WifiP2pManager.ActionListener {
+        manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 TODO("Not yet implemented")
             }
@@ -244,40 +252,157 @@ class WifiP2pDriver (val activity: MainActivity) {
         })
     }
 
-    inner class Server: Thread() {
+    inner class Server(val textView: TextView): Thread() {
         lateinit var socket: Socket
         lateinit var serverSocket: ServerSocket
+        var inputStream: InputStream? = null
+        //var outputStream: OutputStream? = null
 
         override fun run() {
             serverSocket = ServerSocket(8888)
+            /**
+             * Wait for client connections. This call blocks until a
+             * connection is accepted from a client.
+             */
             socket = serverSocket.accept()
-            sendReceive = SendReceive(socket)
-            sendReceive.start()
-        }
+            //textView.text = "Connected to Client"
+            //Toast.makeText(activity, "Connected to Client", Toast.LENGTH_SHORT)
+            inputStream = socket.getInputStream()
+            val buf: ByteArray = ByteArray(1024)
+            //sendReceive = SendReceive(socket)
+            //sendReceive.start()
+
+
+                try {
+                    serverSocket.use {
+
+                        /**
+                         * If this code is reached, a client has connected and transferred data
+                         * Save the input stream from the client as a JPEG file
+                         */
+                        while (!socket.isClosed) {
+                            val bytes = inputStream?.read(buf)
+                            if (bytes != null) {
+                                if (bytes > 0) {
+                                    println("Absolut path: " + Environment.getDataDirectory().absolutePath)
+                                    println("Path" + Environment.getDataDirectory().path)
+                                    /*val f = File(
+                                        Environment.getExternalStorageDirectory().absolutePath +
+                                                "/${activity.packageName}/wifip2pshared-${System.currentTimeMillis()}.jpg"
+                                    )*/
+
+                                    val f: File = File(activity.getExternalFilesDir("received"),
+                                    "wifip2pshared-" + System.currentTimeMillis()
+                                    + ".jpg")
+
+                                    val dirs = File(f.parent)
+
+                                    dirs.takeIf { it.doesNotExist() }?.apply {
+                                        mkdirs()
+                                    }
+                                    f.createNewFile()
+                                    //val inputstream = client.getInputStream()
+                                    val fileHandler = FileHandler()
+                                    val tempInputStream = inputStream
+                                    val outputStream = FileOutputStream(f)
+                                    fileHandler.copyFile(tempInputStream!!, outputStream)
+                                    serverSocket.close()
+                                    Log.d(TAG, "Server closed!")
+
+                                    //f.absolutePath
+                                    //textView.text = "File copied - $f.absolutePath"
+                                    //Toast.makeText(activity, "File copied - $f.absolutePath", Toast.LENGTH_SHORT)
+                                    Log.d(TAG, "URI PATH IN SERVER: ${f.absolutePath}")
+                                    Log.d(TAG, "URI PATH IN SERVER: ${f.path}")
+                                    /*val intent = Intent(android.content.Intent.ACTION_VIEW).apply {
+                                        setDataAndType(Uri.parse("${f.absolutePath}"), "")
+                                    }*/
+
+
+                                    val recvFile = File(f.absolutePath)
+                                    val fileUri: Uri = FileProvider.getUriForFile(
+                                        activity,
+                                        "unibas.dmi.sdatadirect.fileprovider",
+                                        recvFile
+                                    )
+                                    val intent = Intent()
+                                    intent.action = android.content.Intent.ACTION_VIEW
+                                    intent.setDataAndType(fileUri, "image/*")
+                                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    activity.startActivity(intent)
+                                    //activity.startActivity(intent)
+                                }
+                            }
+                        }
+                    }
+                } catch (e: IOException) {
+                    Log.e(TAG, e.message)
+                }
+            }
+
+        private fun File.doesNotExist(): Boolean = !exists()
     }
 
-    inner class Client(hostAdress: InetAddress): Thread() {
-        lateinit var socket: Socket
-        lateinit var hostAdd: String
+    inner class Client(hostAdress: InetAddress, val textView: TextView): Thread() {
+        var socket: Socket
+        var hostAdd: String
+        var inputStream: InputStream? = null
+        var outputStream: OutputStream? = null
+        val context: Context = activity
+        val cr = context.contentResolver
+
         init {
             socket = Socket()
             this.hostAdd = hostAdress.hostAddress
         }
 
         override fun run() {
-            try {
-                socket.bind(null)
-                socket.connect(InetSocketAddress(hostAdd, 8888))
-                sendReceive = SendReceive(socket)
-                sendReceive.start()
-            } catch (e: FileNotFoundException) {
-                e.printStackTrace()
-            } catch (e: IOException) {
-                e.printStackTrace()
+            socket.bind(null)
+            socket.connect(InetSocketAddress(hostAdd, 8888))
+            //textView.text = "Connected to Server"
+            //Toast.makeText(activity, "Connected to server", Toast.LENGTH_SHORT)
+            Log.d(TAG, "Client socket - ${socket.isConnected}")
+            outputStream = socket.getOutputStream()
+
+            while (!socket.isClosed) {
+                try {
+
+                    //sendReceive = SendReceive(socket)
+                    //sendReceive.start()
+
+                    if (fileUri != "") {
+
+                        try {
+                            val uri: Uri = Uri.parse(fileUri)
+                            inputStream = cr.openInputStream(uri)
+                            Log.d(TAG, "URI details: ${uri.path}")
+                            Log.d(TAG, "URI details: ${uri.authority}")
+                            Log.d(TAG, "URI details: ${uri.host}")
+                            
+                        } catch (e: FileNotFoundException) {
+                            Log.d(TAG, "File not found")
+                            Log.d(TAG, e.toString())
+                        }
+                        val fileHandler = FileHandler()
+                        val tempOutPutStream = outputStream
+                        val tempInputStream = inputStream
+                        fileHandler.copyFile(tempInputStream!!, tempOutPutStream)
+                        Log.d(TAG, "Client: Data Written")
+                        /*socket.takeIf { it.isConnected }?.apply {
+                            close()
+                            Log.d(TAG, "Client closed!")
+                        }*/
+                    }
+
+                } catch (e: FileNotFoundException) {
+                    Log.d(TAG, "File not found")
+                    e.printStackTrace()
+
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
             }
         }
-
-
     }
 
     inner class SendReceive(socket: Socket?): Thread() {
@@ -321,6 +446,8 @@ class WifiP2pDriver (val activity: MainActivity) {
                 }
             }
         }
+
+
 
         fun copyFile(inputStream: InputStream, outputStream: FileOutputStream) {
             outputStream.use { fileOutputStream ->  inputStream.copyTo(fileOutputStream)}
@@ -413,7 +540,7 @@ class WifiP2pDriver (val activity: MainActivity) {
                 f.createNewFile()
                 val inputstream = client.getInputStream()
                 val fileHandler = FileHandler()
-                fileHandler.copyFile(inputstream, FileOutputStream(f))
+                //fileHandler.copyFile(inputstream?.readBytes(), FileOutputStream(f))
                 serverSocket.close()
                 f.absolutePath
             }

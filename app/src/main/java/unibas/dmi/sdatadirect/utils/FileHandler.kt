@@ -9,16 +9,21 @@ class FileHandler {
 
     private val TAG: String = "FileHandler"
 
-    fun copyFile(inputStream: InputStream?, outputStream: OutputStream): Boolean {
+    fun copyFile(inputStream: InputStream, outputStream: OutputStream?): Boolean {
         val buf: ByteArray = ByteArray(1024)
-        var len: Int? = null
+        var len: Int = 0
 
         try {
-            while (inputStream?.read(buf).also { len = it } != -1) {
-                outputStream.write(buf, 0, len!!)
+            while (inputStream.read(buf).also { len = it } != -1) {
+                Log.d(TAG, "While in")
+                outputStream?.write(buf, 0, len)
+                Log.d(TAG, "While out")
             }
-            outputStream.close()
-            inputStream?.close()
+            Log.d(TAG, "WRITEEN")
+            outputStream?.close()
+            inputStream.close()
+            //outputStream?.write(inputStream)
+            //outputStream?.close()
         } catch (e: IOException) {
             Log.d(TAG, e.toString())
             return false

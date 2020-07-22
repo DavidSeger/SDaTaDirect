@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
     val MESSAGE_TOAST: Int = 6
     val MESSAGE_WRITE: Int = 7
 
+    lateinit var serviceIntent: Intent
+
     val handler: Handler = Handler(Handler.Callback {msg: Message ->
 
         when (msg.what) {
@@ -118,6 +120,8 @@ class MainActivity : AppCompatActivity() {
 
             wifiP2pDriver.connect(wifiP2pDriver.peers[i])
         }
+
+        serviceIntent = Intent()
 
         chooseFileBtn.setOnClickListener {
             val target = Intent(Intent.ACTION_GET_CONTENT)
@@ -177,20 +181,39 @@ class MainActivity : AppCompatActivity() {
         }*/
 
         if (requestCode == CHOOSE_FILE_RESULT_CODE && resultCode == Activity.RESULT_OK) {
+            val uri = data?.data
+            textView.text = "Sending"
+            Log.d(TAG, "Intent------------------ $uri")
+            /*serviceIntent = Intent(this, wifiP2pDriver.client::class.java).apply {
+            action = FileTransferService.ACTION_SEND_FILE
+            putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString())
+            putExtra(FileTransferService.EXTRAS_GROUP_OWNDER_ADDRESS,
+                wifiP2pDriver.groupOwnerAddress)
+            putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8888)
+        }
+        Log.d(TAG, "Hallo 1")
+        Log.d(TAG, wifiP2pDriver.groupOwnerAddress)
+        startService(serviceIntent)
+        Log.d(TAG, "Hallo 2")*/
+            wifiP2pDriver.fileUri = uri.toString()
+        }
+
+
+        /*if (requestCode == CHOOSE_FILE_RESULT_CODE && resultCode == Activity.RESULT_OK) {
             if (data != null) {
                 val uri = data.data
                 textView.text = "Sending"
                 Log.d(TAG, "Intent------------------ $uri")
                 val serviceIntent = Intent(this, FileTransferService::class.java).apply {
                     action = FileTransferService.ACTION_SEND_FILE
-                    putExtra(FileTransferService.EXTRAS_FILE_PATH, uri?.toString())
+                    putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString())
                     putExtra(FileTransferService.EXTRAS_GROUP_OWNDER_ADDRESS,
                         wifiP2pDriver.groupOwnerAddress)
                     putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8888)
                 }
                 startService(serviceIntent)
             }
-        }
+        }*/
     }
 
     override fun onResume() {
