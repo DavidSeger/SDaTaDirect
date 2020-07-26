@@ -27,4 +27,17 @@ class FileHandler {
         return true
     }
 
+    fun copyFile(inputStreamByteArray: ByteArray, outputStream: OutputStream): Boolean {
+
+        try {
+            outputStream.write(inputStreamByteArray)
+            outputStream.close()
+        } catch (e: IOException) {
+            Log.d(TAG, e.toString())
+            return false
+        }
+
+        return true
+    }
+
 }

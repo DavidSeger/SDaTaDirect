@@ -38,9 +38,9 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
             socket.connect(InetSocketAddress(host, port!!), SOCKET_TIMEOUT)
 
             Log.d(TAG, "Client socket - ${socket.isConnected}")
-            val outStream: OutputStream = socket.getOutputStream()
             val cr = context.contentResolver
             var inputStream: InputStream? = null
+
 
             try {
                 inputStream = cr.openInputStream(Uri.parse(fileUri))
@@ -48,48 +48,20 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
                 Log.d(TAG, e.toString())
             }
             val fileHandler = FileHandler()
-            fileHandler.copyFile(inputStream, outStream)
+            val outStream: OutputStream = socket.getOutputStream()
+            fileHandler.copyFile(inputStream?.readBytes()!!, outStream)
+
             Log.d(TAG, "Client: Data Written")
+
         } catch (e: IOException) {
             Log.e(TAG, e.message)
         } finally {
             socket.takeIf { it.isConnected }?.apply {
+                Log.d(TAG, "Client closed!")
                 close()
             }
         }
 
-        /*if (intent?.action.equals(ACTION_SEND_FILE)) {
-            val fileUri: String? = intent?.extras?.getString(EXTRAS_FILE_PATH)
-            val host: String? = intent?.extras?.getString(EXTRAS_GROUP_OWNDER_ADDRESS)
-            val socket = Socket()
-            val port: Int? = intent?.extras?.getInt(EXTRAS_GROUP_OWNER_PORT)
 
-            try {
-                Log.d(TAG, "Opening client socket -")
-                socket.bind(null)
-                socket.connect(InetSocketAddress(host, port!!), SOCKET_TIMEOUT)
-
-                Log.d(TAG, "Client socket - ${socket.isConnected}")
-                val outStream: OutputStream = socket.getOutputStream()
-                val cr = context.contentResolver
-                var inputStream: InputStream? = null
-
-                try {
-                    inputStream = cr.openInputStream(Uri.parse(fileUri))
-                } catch (e: FileNotFoundException) {
-                    Log.d(TAG, e.toString())
-                }
-                val fileHandler = FileHandler()
-                fileHandler.copyFile(inputStream, outStream)
-                Log.d(TAG, "Client: Data Written")
-            } catch (e: IOException) {
-                Log.e(TAG, e.message)
-            } finally {
-                socket.takeIf { it.isConnected }?.apply {
-                    close()
-                }
-            }
-
-        }*/
     }
 }

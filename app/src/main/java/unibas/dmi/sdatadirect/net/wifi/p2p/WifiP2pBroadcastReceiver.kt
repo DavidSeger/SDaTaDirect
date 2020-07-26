@@ -47,6 +47,9 @@ class WifiP2pBroadcastReceiver(val driver: WifiP2pDriver,
                 // that.
                 driver.checkPermission()
                 manager.requestPeers(channel, driver.peerListListener)
+                if (driver.wantsToBeClient){
+                    driver.connect(driver.deviceWantsToConnectTo)
+                }
                 //activity.wifiP2pDriver.updatePeerList()
                 Log.d("TAG", "P2P peers changed")
 
