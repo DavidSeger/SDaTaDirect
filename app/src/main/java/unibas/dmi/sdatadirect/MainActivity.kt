@@ -37,6 +37,7 @@ import unibas.dmi.sdatadirect.database.PeerDao
 import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
+import unibas.dmi.sdatadirect.peer.PeerActivity
 import unibas.dmi.sdatadirect.utils.QRCode
 
 import java.io.File
@@ -66,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var chooseFileBtn: FloatingActionButton
     lateinit var qrCodeBtn: Button
     lateinit var scanQrBtn: Button
+    lateinit var peersBtn: Button
 
     val STATE_LISTENING: Int = 1
     val STATE_CONNECTING: Int = 2
@@ -126,6 +128,7 @@ class MainActivity : AppCompatActivity() {
         chooseFileBtn = findViewById(R.id.chooseFileBtn)
         qrCodeBtn = findViewById(R.id.qrCodeButton)
         scanQrBtn = findViewById(R.id.scanQRBtn)
+        peersBtn = findViewById(R.id.peersBtn)
 
         intentFilter = IntentFilter()
         intentFilter.apply {
@@ -141,6 +144,11 @@ class MainActivity : AppCompatActivity() {
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
             // Indicates this device's details have changed.
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
+        }
+
+        peersBtn.setOnClickListener {
+            val intent = Intent(this, PeerActivity::class.java)
+            startActivity(intent)
         }
 
         db = Room.databaseBuilder(
