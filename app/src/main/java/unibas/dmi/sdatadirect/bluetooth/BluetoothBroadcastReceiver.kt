@@ -66,9 +66,15 @@ class BluetoothBroadcastReceiver(val bluetoothDriver: BluetoothDriver, val activ
             BluetoothDevice.ACTION_FOUND -> {
                 val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                 println( "Device found: ${device?.name}:${device?.address}")
-                bluetoothDriver.devices.add(device)
-                bluetoothDriver.bluetoothDeviceListAdapter = BluetoothDeviceListAdapter(context, R.layout.device_adapter_view, bluetoothDriver.devices)
-                activity.listView.adapter = bluetoothDriver.bluetoothDeviceListAdapter
+                if (!bluetoothDriver.devices.contains(device)) {
+                    bluetoothDriver.devices.add(device)
+                    bluetoothDriver.bluetoothDeviceListAdapter = BluetoothDeviceListAdapter(
+                        context,
+                        R.layout.device_adapter_view,
+                        bluetoothDriver.devices
+                    )
+                    activity.listView.adapter = bluetoothDriver.bluetoothDeviceListAdapter
+                }
             }
 
             BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {

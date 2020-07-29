@@ -1,57 +1,49 @@
 package unibas.dmi.sdatadirect
 
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.le.ScanCallback
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.net.Uri
 
-import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.*
+import android.os.*
 
-import android.os.Environment
-import android.os.Handler
-import android.os.Message
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.room.Room
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
 
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlin.jvm.javaClass
 import unibas.dmi.sdatadirect.bluetooth.BluetoothDriver
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.database.AppDatabase
 import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerDao
-import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
 import unibas.dmi.sdatadirect.peer.PeerActivity
+import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.QRCode
 
-import java.io.File
 import java.io.IOException
 import java.lang.Exception
 import java.net.NetworkInterface
-import java.nio.charset.Charset
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private val TAG: String = "MainActivity"
     private val charset = Charsets.UTF_8
     val CHOOSE_FILE_RESULT_CODE: Int = 20
+    val CANCEL_BLUETOOTH_DISCOVERY: Int = 100
 
     lateinit var intentFilter: IntentFilter
     lateinit var wifiP2pDriver: WifiP2pDriver
@@ -68,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var qrCodeBtn: Button
     lateinit var scanQrBtn: Button
     lateinit var peersBtn: Button
+    lateinit var listenBtn: Button
 
     val STATE_LISTENING: Int = 1
     val STATE_CONNECTING: Int = 2
@@ -77,10 +70,18 @@ class MainActivity : AppCompatActivity() {
     val MESSAGE_TOAST: Int = 6
     val MESSAGE_WRITE: Int = 7
     val QRCODE: Int = 8
+    val PEER_SAVED: Int = 9
+    val VERIFICATION_FAILED = 10
 
     lateinit var db: AppDatabase
     lateinit var peerDao: PeerDao
     lateinit var cryptoHandler: CryptoHandler
+
+    lateinit var qrCode: QRCode
+
+    private lateinit var peerViewModel: PeerViewModel
+
+    lateinit var uiThread: Thread
 
 
 
@@ -93,7 +94,7 @@ class MainActivity : AppCompatActivity() {
             STATE_CONNECTED -> { textView.text = "Connected" }
             STATE_CONNECTION_FAILED -> { textView.text = "Connection Failed" }
             STATE_MESSAGE_RECEIVED -> {
-                val readBuff: ByteArray = msg.obj as ByteArray
+                /*val readBuff: ByteArray = msg.obj as ByteArray
                 /*val tempMsg = String(readBuff, 0, msg.arg1)
                 println("MESSAGE: $tempMsg")*/
 
@@ -102,12 +103,30 @@ class MainActivity : AppCompatActivity() {
                 if (verification) {
                     bluetoothDriver.stop()
                     wifiP2pDriver.discoverPeers()
-                }
+                }*/
             }
             MESSAGE_TOAST -> {textView.text = "Couldn't send data"}
             QRCODE -> {
                 val qrCode = QRCode(this)
                 qrCode.showQrCode(msg.obj as Bitmap)
+            }
+
+            PEER_SAVED -> { textView.text = "Peer saved"}
+
+            VERIFICATION_FAILED -> {
+
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle("Verification failed")
+                builder.setMessage(
+                    "The verification has been failed! Tab on close to close the " +
+                            "connection"
+                )
+                builder.setPositiveButton("Close") { dialog, which ->
+                    finish()
+                }
+
+                val dialog: AlertDialog = builder.create()
+                dialog.show()
             }
         }
 
@@ -120,6 +139,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+
         textView = findViewById(R.id.textView)
         listView = findViewById(R.id.peerView)
         discoverableSwitch = findViewById(R.id.discoverableSwitch)
@@ -129,6 +151,7 @@ class MainActivity : AppCompatActivity() {
         qrCodeBtn = findViewById(R.id.qrCodeButton)
         scanQrBtn = findViewById(R.id.scanQRBtn)
         peersBtn = findViewById(R.id.peersBtn)
+        listenBtn = findViewById(R.id.listenBtn)
 
         intentFilter = IntentFilter()
         intentFilter.apply {
@@ -146,25 +169,29 @@ class MainActivity : AppCompatActivity() {
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
         }
 
+        uiThread = Thread.currentThread()
+
+        peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
+
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)
             startActivity(intent)
         }
 
-        db = Room.databaseBuilder(
-            this, AppDatabase::class.java, "Peers.db"
-        ).build()
-        peerDao = db.peersDao()
+        peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
 
         cryptoHandler = CryptoHandler()
+        qrCode = QRCode(this)
 
-        bluetoothDriver = BluetoothDriver(this, handler)
-        wifiP2pDriver = WifiP2pDriver(this)
+        bluetoothDriver = BluetoothDriver(this, handler, qrCode, cryptoHandler, peerViewModel)
+        wifiP2pDriver = WifiP2pDriver(this, cryptoHandler, peerViewModel)
         /*scanBtn.setOnClickListener {
             wifiP2pDriver.discoverPeers()
             qrCode.showQrCode(bitmap)
         }*/
 
+
+        // PHASE 1
         qrCodeBtn.setOnClickListener {
             val keyAES = cryptoHandler.keyAESGenerator()
             val keyRSA = cryptoHandler.keyPairRSAGenerator()
@@ -173,8 +200,7 @@ class MainActivity : AppCompatActivity() {
             cryptoHandler.privateRSAKey = keyRSA.private
 
             val encodedKeyAES = cryptoHandler.getSecretKeyEncoded(cryptoHandler.sharedAESKey!!)
-            val encodedKeyRSA = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!)
-            val qrCode = QRCode(this)
+            val encodedPublicKeyRSA = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!)
 
             var wifiMacAddress: String? = null
             try {
@@ -193,67 +219,159 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-            val bitmap = qrCode.generateQRCode("$wifiMacAddress||$encodedKeyAES||$encodedKeyRSA")
-            /*val message: Message = handler.obtainMessage(QRCODE, bitmap)
-            message.sendToTarget()*/
+            val bitmap = qrCode.generateQRCode("$wifiMacAddress#$encodedKeyAES#$encodedPublicKeyRSA")
 
             qrCode.showQrCode(bitmap)
-
-
-            /*activity.peerDao.insertAll(
-                Peer(
-                    Random().nextInt(), socket.remoteDevice.name,
-                socket.remoteDevice.address, "", encodedKey)
-            )
-            activity.wifiP2pDriver.wantsToBeClient = false
-            activity.wifiP2pDriver.discoverPeers()*/
         }
 
         scanQrBtn.setOnClickListener {
-            val scanner = IntentIntegrator(this)
-            scanner.initiateScan()
+            qrCode.scanQRCode()
         }
 
+        // PHASE 2
 
+        listenBtn.setOnClickListener {
+            bluetoothDriver.startServer()
+            val message: Message = Message.obtain()
+            message.what = STATE_LISTENING
+            handler.sendMessage(message)
+        }
 
         discoverableSwitch.setOnCheckedChangeListener {buttonView, isChecked ->
             if (isChecked) {
                 buttonView.text = "ON"
                 bluetoothDriver.discoverable(true)
-                bluetoothDriver.start()
+                /*if (bluetoothDriver.acceptThread == null) {
+                    bluetoothDriver.startServer()
+                }*/
+
             } else {
                 buttonView.text = "OFF"
-                bluetoothDriver.acceptThread?.cancel()
                 bluetoothDriver.discoverable(false)
+                /*if (bluetoothDriver.acceptThread != null) {
+                    bluetoothDriver.acceptThread?.cancel()
+                }*/
+
             }
+        }
+
+        scanBtn.setOnClickListener {
+            //bluetoothDriver.start()
+            //bluetoothDriver.startDiscovery()
+            wifiP2pDriver.discoverPeers()
         }
 
         /*scanBtn.setOnClickListener {
             //bluetoothDriver.start()
-            bluetoothDriver.startDiscover()
-        }*/
-
-        scanBtn.setOnClickListener {
-            //bluetoothDriver.start()
             wifiP2pDriver.discoverPeers()
-        }
+        }*/
 
         stopConnectivityButton.setOnClickListener {
             bluetoothDriver.stop()
             wifiP2pDriver.stop()
         }
+
         /*listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
-            bluetoothDriver.bluetoothAdapter?.cancelDiscovery()
             Log.d(TAG, "You clicked on a device")
             val deviceName: String? = bluetoothDriver.devices[i]?.name
             val deviceAddress: String? = bluetoothDriver.devices[i]?.address
             Log.d(TAG, "You clicked on device: $deviceName, $deviceAddress")
-            bluetoothDriver.connect(bluetoothDriver.devices[i])
-            val message: Message = Message.obtain()
-            message.what = STATE_CONNECTING
-            handler.sendMessage(message)
+            val device = bluetoothDriver.devices[i]
+            val peer = peerViewModel.getPeerByBluetoothAddress(device?.address!!)
+
+            var saved = false
+
+            if (peer == null) {
+
+                if (qrCode.scannedContent == null) {
+                    Toast.makeText(this, "You have to scan the QRCode first!", Toast.LENGTH_SHORT)
+                    saved = false
+                } else {
+                    val dialog = Dialog(this)
+                    dialog.setContentView(R.layout.peeradd_dialog)
+                    dialog.setTitle("You want to add this peer to your database?")
+                    val linearLayout = dialog.findViewById<LinearLayout>(R.id.linearLayout)
+                    val saveBtn: Button = dialog.findViewById(R.id.saveBtn)
+                    val cancelBtn: Button = dialog.findViewById(R.id.button3)
+
+                    val newPeer = Peer(
+                        name = device.name,
+                        bluetooth_mac_address = device.address,
+                        wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
+                        shared_key = qrCode.scannedContent?.split("#")?.get(1),
+                        public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                        private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
+                        foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
+                    )
+
+                    Log.d(TAG, "DeviceName: ${device.name}")
+                    Log.d(TAG, "BluetoothAddres: ${device.address}")
+                    Log.d(TAG, "WiFiAddress: ${qrCode.scannedContent?.split("#")?.get(0)}")
+                    Log.d(TAG, "SharedKey: ${qrCode.scannedContent?.split("#")?.get(1)}")
+                    Log.d(TAG, "PublicKey: ${cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!)}")
+                    Log.d(TAG, "PrivateKey: ${cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!)}")
+                    Log.d(TAG, "ForeignKey: ${qrCode.scannedContent?.split("#")?.get(2)}")
+
+                    val name = TextView(dialog.context)
+                    val bluetoothAddress = TextView(dialog.context)
+                    val wifiAddress = TextView(dialog.context)
+
+                    name.text = newPeer.name
+                    bluetoothAddress.text = newPeer.bluetooth_mac_address
+                    wifiAddress.text = newPeer.wifi_mac_address
+
+                    linearLayout.addView(name)
+                    linearLayout.addView(bluetoothAddress)
+                    linearLayout.addView(wifiAddress)
+
+                    saveBtn.setOnClickListener {
+                        if (newPeer.wifi_mac_address == null || newPeer.shared_key == null || newPeer.public_key == null) {
+                            Toast.makeText(dialog.context, "You have to scan the QRCode first!", Toast.LENGTH_SHORT)
+                            saved = false
+                            dialog.cancel()
+                        } else {
+                            peerViewModel.insert(newPeer)
+                            saved = true
+
+                            bluetoothDriver.connect(bluetoothDriver.devices[i])
+                            val message: Message = Message.obtain()
+                            message.what = STATE_CONNECTING
+                            handler.sendMessage(message)
+
+                            dialog.cancel()
+                        }
+                    }
+
+                    cancelBtn.setOnClickListener {
+                        saved = false
+
+                        val builder = AlertDialog.Builder(this@MainActivity)
+                        builder.setTitle("Refused peer to save")
+                        builder.setMessage(
+                            "Are you sure to not save the device? Otherwise, the connection will be " +
+                                    "aborted"
+                        )
+                        builder.setPositiveButton("YES") { dialog, which ->
+                            finish()
+                        }
+
+                        val alertDialog: AlertDialog = builder.create()
+                        alertDialog.show()
+
+                        dialog.cancel()
+                    }
+
+                    dialog.show()
+                }
+
+            } else {
+
+            bluetoothDriver.connect(device)
+        }
+
         }*/
 
+        // TODO: App should be able to automatically connect to the desired device.
         wifiP2pDriver.listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
             wifiP2pDriver.connect("", wifiP2pDriver.peers[i])
         }
@@ -283,21 +401,60 @@ class MainActivity : AppCompatActivity() {
             if (data != null) {
                 val uri = data.data
                 textView.text = "Sending"
+                /*val fileHandler = FileHandler()
                 Log.d(TAG, "Intent------------------ $uri")
                 val serviceIntent = Intent(this, FileTransferService::class.java).apply {
                     action = FileTransferService.ACTION_SEND_FILE
                     putExtra(FileTransferService.EXTRAS_FILE_PATH, uri?.toString())
+                    if (wifiP2pDriver.isServer) {
+                        putExtra(FileTransferService.EXTRAS_SOCKET, wifiP2pDriver.server.serverSocket)
+                    }
+
                     putExtra(FileTransferService.EXTRAS_GROUP_OWNDER_ADDRESS,
                         wifiP2pDriver.groupOwnerAddress)
                     putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8888)
                 }
                 startService(serviceIntent)
+
+                val cr = this.contentResolver
+                var inputStream: InputStream? = null
+
+
+                try {
+                    inputStream = cr.openInputStream(Uri.parse(uri?.toString()))
+                } catch (e: FileNotFoundException) {
+                    Log.d(TAG, e.toString())
+                }*/
+
+                if (wifiP2pDriver.isServer) {
+                    try {
+                       val uriToSend = wifiP2pDriver.server.handler.obtainMessage(
+                            wifiP2pDriver.server.FILE_CHOSEN, Uri.parse(uri?.toString()))
+                        uriToSend.sendToTarget()
+
+
+                    } catch (e: IOException) {
+                        Log.e(TAG, e.message)
+                    }
+                } else if (wifiP2pDriver.isClient) {
+                    try {
+                        val uriToSend = wifiP2pDriver.client.handler.obtainMessage(
+                            wifiP2pDriver.client.FILE_CHOSEN, Uri.parse(uri?.toString()))
+                        uriToSend.sendToTarget()
+
+                    } catch (e: IOException) {
+                        Log.e(TAG, e.message)
+                    }
+                }
             }
         } else {
             val result: IntentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-            bluetoothDriver.scannedContent = result.contents
+            //bluetoothDriver.scannedContent = result.contents
+            qrCode.scannedContent = result.contents
         }
     }
+
+
 
     override fun onResume() {
         super.onResume()

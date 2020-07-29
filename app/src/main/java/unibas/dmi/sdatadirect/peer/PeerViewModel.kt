@@ -26,4 +26,16 @@ class PeerViewModel(application: Application): AndroidViewModel(application) {
     fun insert(peer: Peer) = viewModelScope.launch(Dispatchers.IO) {
         repository.insert(peer)
     }
+
+    fun getPeerByBluetoothAddress(bluetoothAddress: String): Peer? {
+        return repository.getPeerbyBluetoothAddress(bluetoothAddress)
+    }
+
+    fun getPeerByWiFiAddress(wifiAddress: String): Peer? {
+        return repository.getPeerByWifiAddress(wifiAddress)
+    }
+
+    fun deleteAllPeers(){
+       repository.deleteAll()
+    }
 }

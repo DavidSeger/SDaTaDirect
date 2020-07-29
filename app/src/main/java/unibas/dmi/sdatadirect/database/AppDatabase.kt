@@ -27,8 +27,9 @@ abstract class AppDatabase: RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "word_database"
+                    "peer_database"
                 )
+                    .allowMainThreadQueries()
                     .addCallback(AppDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance

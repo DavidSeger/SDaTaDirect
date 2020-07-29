@@ -1,6 +1,8 @@
 package unibas.dmi.sdatadirect.crypto
 
 import java.security.*
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import javax.crypto.Cipher
@@ -66,7 +68,8 @@ class CryptoHandler {
 
     fun getPrivateKeyDecoded(privKeyEncoded: String): PrivateKey {
         val keyBytes: ByteArray = Base64.getDecoder().decode(privKeyEncoded)
-        val spec: X509EncodedKeySpec = X509EncodedKeySpec(keyBytes)
+        //val spec: X509EncodedKeySpec = X509EncodedKeySpec(keyBytes)
+        val spec: PKCS8EncodedKeySpec = PKCS8EncodedKeySpec(keyBytes)
         val keyFactor: KeyFactory = KeyFactory.getInstance("RSA")
         val key = keyFactor.generatePrivate(spec)
 
@@ -93,19 +96,21 @@ class CryptoHandler {
         return cipherRSA.doFinal(encryptedMessage)
     }
 
-    fun createSignature(message: ByteArray): ByteArray {
+    fun createSignature(message: ByteArray, privateKey: String?): ByteArray {
         val signatureAlgorithm: Signature = Signature.getInstance("SHA256WithRSA")
-        signatureAlgorithm.initSign(privateRSAKey)
+        val privateKeyRSA = getPrivateKeyDecoded(privateKey!!)
+        signatureAlgorithm.initSign(privateKeyRSA)
         signatureAlgorithm.update(message)
         val signature: ByteArray = signatureAlgorithm.sign()
 
         return signature
     }
 
-    fun verifySignature(signature: ByteArray): Boolean {
+    fun verifySignature(signature: ByteArray, message: ByteArray, publicKey: String?): Boolean {
         val verificationAlgorithm: Signature = Signature.getInstance("SHA256WithRSA")
-        verificationAlgorithm.initVerify(publicRSAKey)
-        verificationAlgorithm.update(signature)
+        val publicKeyRSA = getPublicKeyDecoded(publicKey!!)
+        verificationAlgorithm.initVerify(publicKeyRSA)
+        verificationAlgorithm.update(message)
         val match = verificationAlgorithm.verify(signature)
 
         return match

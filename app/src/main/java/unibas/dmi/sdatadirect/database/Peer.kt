@@ -4,23 +4,29 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(tableName = "peer_table")
 data class Peer (
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    val id: Int? = null,
 
     @ColumnInfo(name = "name")
-    val name: String,
+    var name: String? = null,
 
     @ColumnInfo(name = "bluetooth_mac_address")
-    val bluetooth_mac_address: String,
+    var bluetooth_mac_address: String? = null,
 
     @ColumnInfo(name = "wifi_mac_address")
-    val wifi_mac_address: String,
+    var wifi_mac_address: String? = null,
 
     @ColumnInfo(name = "shared_key")
-    val shared_key: String,
+    var shared_key: String? = null,
 
     @ColumnInfo(name = "public_key")
-    val public_key: String
+    var public_key: String? = null,
+
+    @ColumnInfo(name = "private_key")
+    var private_key: String? = null,
+
+    @ColumnInfo(name = "foreign_public_key")
+    var foreign_public_key: String? = null
 )

@@ -18,6 +18,12 @@ import java.lang.StringBuilder
 
 class QRCode(val activity: MainActivity) {
 
+    var scannedContent: String? = null
+        get() = field
+        set(value) {
+            field = value
+        }
+
     fun generateQRCode(input: String): Bitmap{
         val textToEncode: StringBuilder = StringBuilder()
         textToEncode.append(input)
@@ -55,6 +61,7 @@ class QRCode(val activity: MainActivity) {
 
     fun scanQRCode() {
         val scanner = IntentIntegrator(activity)
+        scanner.setOrientationLocked(false)
         scanner.initiateScan()
     }
 }
