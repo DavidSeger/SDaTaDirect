@@ -76,13 +76,15 @@ class CryptoHandler {
         return key
     }
 
-    fun encryptAES(message: ByteArray, key: SecretKey): ByteArray {
-        cipherAES.init(Cipher.ENCRYPT_MODE, key)
+    fun encryptAES(message: ByteArray, key: String?): ByteArray {
+        val secretKey = getSecretKeyDecoded(key!!)
+        cipherAES.init(Cipher.ENCRYPT_MODE, secretKey)
         return cipherAES.doFinal(message)
     }
 
-    fun decryptAES(encryptedMessage: ByteArray, key: SecretKey): ByteArray {
-        cipherAES.init(Cipher.DECRYPT_MODE, key)
+    fun decryptAES(encryptedMessage: ByteArray, key: String?): ByteArray {
+        val secretKey = getSecretKeyDecoded(key!!)
+        cipherAES.init(Cipher.DECRYPT_MODE, secretKey)
         return cipherAES.doFinal(encryptedMessage)
     }
 

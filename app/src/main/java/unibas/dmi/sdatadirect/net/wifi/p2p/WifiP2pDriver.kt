@@ -7,6 +7,7 @@ import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.util.Log
+import android.view.View
 import android.widget.*
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.R
@@ -40,7 +41,7 @@ class WifiP2pDriver (
     val deviceNameArray: MutableList<String> = mutableListOf()
     val deviceArray: MutableList<WifiP2pDevice> = mutableListOf()
 
-    val listView: ListView = activity.findViewById(R.id.peerView)
+    //val listView: ListView = activity.findViewById(R.id.peerView)
 
     val adapter: ArrayAdapter<WifiP2pDevice> = ArrayAdapter(
         activity,
@@ -49,13 +50,13 @@ class WifiP2pDriver (
 
     var wantsToBeClient = false
     lateinit var deviceWantsToConnectTo: String
+    var clientAddress: String = ""
 
 
     var isServer = false
     var isClient = false
 
-    lateinit var server: ServerAsyncTask
-    lateinit var client: ClientAsyncTask
+    var groupOwnerAddress: String = ""
 
     /**
      * DiscoverPeers detects available peers that are in range. If the discovery was successful,
@@ -116,6 +117,10 @@ class WifiP2pDriver (
 
         checkPermission()
 
+        activity.listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
+            connect("", peers[i])
+        }
+
         manager?.discoverPeers(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 //...
@@ -136,7 +141,7 @@ class WifiP2pDriver (
      * will be specified containing the information of the device to connect to. The WifiP2pManager.ActionListener
      * notifies you of a connection success or failure.
      */
-    fun connect(address: String = "", target: WifiP2pDevice? = null) {
+    fun connect(address: String, target: WifiP2pDevice?) {
 
         checkPermission()
 
@@ -186,22 +191,14 @@ class WifiP2pDriver (
 
     val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { info ->
 
+        groupOwnerAddress = info.groupOwnerAddress.hostAddress
+
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            server = ServerAsyncTask(activity, activity, cryptoHandler, peerViewModel)
-            server.execute()
+            FileServerAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
             isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
-            client = ClientAsyncTask(
-                activity,
-                activity,
-                info.groupOwnerAddress.hostAddress,
-                8888,
-                cryptoHandler,
-                peerViewModel
-                )
-            client.execute()
             isClient = true
         }
     }

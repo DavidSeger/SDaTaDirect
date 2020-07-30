@@ -4,39 +4,44 @@ import android.app.IntentService
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.renderscript.ScriptGroup
 import android.util.Log
-import unibas.dmi.sdatadirect.utils.FileHandler
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.greenrobot.eventbus.EventBus
+import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.peer.PeerViewModel
 import java.io.*
 import java.net.InetSocketAddress
-import java.net.ServerSocket
 import java.net.Socket
+import java.nio.charset.Charset
+import java.util.*
 
 class FileTransferService: IntentService(FileTransferService::class.simpleName) {
-    override fun onHandleIntent(p0: Intent?) {
-        TODO("Not yet implemented")
-    }
 
-    /*companion object {
+    companion object {
         private val SOCKET_TIMEOUT: Int = 5000
+        val TAG: String = "FileTransferService"
         val ACTION_SEND_FILE = "unibas.dmi.sdatadirect.SEND_FILE"
         val EXTRAS_FILE_PATH = "file_url"
-        val EXTRAS_GROUP_OWNDER_ADDRESS = "go_host"
+        val EXTRAS_DESTINATION_ADDRESS = "desination_address"
+        val EXTRAS_GROUP_OWNER_ADDRESS = "go_host"
         val EXTRAS_GROUP_OWNER_PORT = "go_port"
-        val EXTRAS_SOCKET = "socket"
-        val TAG: String = "FileTransferService"
     }
 
 
     override fun onHandleIntent(intent: Intent?) {
         val context: Context = applicationContext
         val fileUri: String? = intent?.extras?.getString(EXTRAS_FILE_PATH)
-        val host: String? = intent?.extras?.getString(EXTRAS_GROUP_OWNDER_ADDRESS)
-        val socket = intent?.extras?.get(EXTRAS_SOCKET)
+        val destination_address: String? = intent?.extras?.getString(EXTRAS_DESTINATION_ADDRESS)
+        val host: String? = intent?.extras?.getString(EXTRAS_GROUP_OWNER_ADDRESS)
+        val socket = Socket()
         val port: Int? = intent?.extras?.getInt(EXTRAS_GROUP_OWNER_PORT)
-        val fileHandler = FileHandler()
+
+        val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
+        val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
 
         try {
+
+
             Log.d(TAG, "Opening client socket -")
             socket.bind(null)
             socket.connect(InetSocketAddress(host, port!!), SOCKET_TIMEOUT)
@@ -44,7 +49,7 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
             Log.d(TAG, "Client socket - ${socket.isConnected}")
             val cr = context.contentResolver
             var inputStream: InputStream? = null
-
+            val uriType: String? = cr.getType(Uri.parse(fileUri))
 
             try {
                 inputStream = cr.openInputStream(Uri.parse(fileUri))
@@ -52,10 +57,43 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
                 Log.d(TAG, e.toString())
             }
 
-            val outStream = socket.getOutputStream()
-            fileHandler.copyFile(inputStream?.readBytes()!!, outStream)
+            val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
 
-            Log.d(TAG, "Client: Data Written")
+            val objectMapper = ObjectMapper()
+
+            val fileToSend = inputStream?.readBytes()!!
+
+            Log.d(TAG, "Client: Start encryption: ${System.currentTimeMillis()}")
+
+            val encryptedFile = cryptoHandler.encryptAES(fileToSend, peer?.shared_key!!)
+
+            val fileStreamEncodedToString = Base64.getEncoder().encodeToString(encryptedFile)
+            val uriTypeEncodedToString = Base64.getEncoder().encodeToString(uriType?.toByteArray(
+                Charset.defaultCharset()))
+
+            val signature = cryptoHandler.createSignature(encryptedFile, peer.private_key)
+
+            val signatureEncodedToString = Base64.getEncoder().encodeToString(signature)
+
+
+            val json: String =  "{\"file\" : \"$fileStreamEncodedToString\"," +
+                                "\"type\" : \"$uriTypeEncodedToString\"," +
+                                "\"signature\" : \"$signatureEncodedToString\"}"
+
+            val node = objectMapper.readTree(json)
+            val encodedNode = objectMapper.writeValueAsBytes(node)
+
+            val outStream: OutputStream = socket.getOutputStream()
+            //FileUtils.copyFile(encodedNode, outStream)
+            Log.d(TAG, "Client: Data Written: ${System.currentTimeMillis()}")
+            outStream.write(encodedNode)
+
+
+
+
+            if (socket.isClosed) {
+                Log.d(TAG, "Client: Is closed")
+            }
 
         } catch (e: IOException) {
             Log.e(TAG, e.message)
@@ -66,5 +104,6 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
             }
         }
 
-    }*/
+
+    }
 }

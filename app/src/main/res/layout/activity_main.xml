@@ -6,6 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <ImageButton
+        android:id="@+id/scanQRBtn"
+        android:layout_width="57dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="68dp"
+        android:adjustViewBounds="true"
+        android:padding="0dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/chooseFileBtn"
+        app:layout_constraintTop_toBottomOf="@+id/peerView"
+        app:layout_constraintVertical_bias="0.61"
+        app:srcCompat="@drawable/qr_scan" />
+
     <ListView
         android:id="@+id/peerView"
         android:layout_width="334dp"
@@ -14,45 +28,44 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.003" />
+        app:layout_constraintVertical_bias="0.003">
+
+    </ListView>
 
     <Switch
         android:id="@+id/discoverableSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="28dp"
         android:text="@string/OnOff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/peerView"
-        app:layout_constraintVertical_bias="0.824" />
+        app:layout_constraintVertical_bias="0.897" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/scanBtn"
         android:layout_width="57dp"
-        android:layout_height="54dp"
+        android:layout_height="57dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
         android:clickable="true"
         android:focusable="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/stopConnectivityBtn"
-        app:layout_constraintHorizontal_bias="0.458"
-        app:layout_constraintStart_toEndOf="@+id/discoverableSwitch"
-        app:layout_constraintTop_toBottomOf="@+id/peerView"
-        app:layout_constraintVertical_bias="0.857"
+        app:layout_constraintBottom_toTopOf="@+id/chooseFileBtn"
+        app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@android:drawable/ic_search_category_default" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/stopConnectivityBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="44dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
         android:backgroundTint="#ED0606"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/peerView"
-        app:layout_constraintVertical_bias="0.857"
         app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
 
     <TextView
@@ -70,56 +83,55 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        app:layout_constraintBottom_toTopOf="@+id/stopConnectivityBtn"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.868"
+        app:layout_constraintHorizontal_bias="0.921"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/peerView"
-        app:layout_constraintVertical_bias="0.889"
+        app:layout_constraintVertical_bias="0.6"
         app:srcCompat="@android:drawable/ic_menu_send" />
 
-    <Button
+    <ImageButton
         android:id="@+id/qrCodeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:text="QRCode"
-        app:layout_constraintBottom_toTopOf="@+id/discoverableSwitch"
+        android:layout_width="65dp"
+        android:layout_height="59dp"
+        android:layout_marginTop="120dp"
+        android:adjustViewBounds="true"
+        android:padding="0dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/scanQRBtn"
+        app:layout_constraintHorizontal_bias="0.311"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/peerView"
-        app:layout_constraintVertical_bias="0.818" />
+        app:layout_constraintVertical_bias="0.229"
+        app:srcCompat="@drawable/qrcode" />
 
-    <Button
-        android:id="@+id/scanQRBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/Scan"
-        app:layout_constraintBottom_toTopOf="@+id/scanBtn"
-        app:layout_constraintEnd_toStartOf="@+id/chooseFileBtn"
-        app:layout_constraintHorizontal_bias="0.381"
-        app:layout_constraintStart_toEndOf="@+id/qrCodeButton"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.746" />
-
-    <Button
-        android:id="@+id/peersBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Peers"
-        app:layout_constraintBottom_toTopOf="@+id/scanQRBtn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <Button
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/listenBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_marginBottom="24dp"
-        android:text="Listen"
-        app:layout_constraintBottom_toTopOf="@+id/qrCodeButton"
-        app:layout_constraintEnd_toStartOf="@+id/peersBtn"
-        app:layout_constraintHorizontal_bias="0.486"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:clickable="true"
+        app:backgroundTint="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/stopConnectivityBtn"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/discoverableSwitch"
+        app:srcCompat="@android:drawable/stat_sys_data_bluetooth" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/peersBtn"
+        android:layout_width="67dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="24dp"
+        android:clickable="true"
+        app:backgroundTint="#DF5207"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/stopConnectivityBtn"
+        app:layout_constraintHorizontal_bias="0.632"
+        app:layout_constraintStart_toEndOf="@+id/listenBtn"
+        app:srcCompat="@drawable/peers" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
