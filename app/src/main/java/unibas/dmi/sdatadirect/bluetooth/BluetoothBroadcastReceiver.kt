@@ -10,6 +10,9 @@ import android.util.Log
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.ui.BluetoothDeviceListAdapter
 
+/**
+ * Received all Bluetooth related changes
+ */
 class BluetoothBroadcastReceiver(val bluetoothDriver: BluetoothDriver, val activity: MainActivity): BroadcastReceiver() {
     private val TAG: String = "BluetoothBroadcast"
 

@@ -1,17 +1,17 @@
 package unibas.dmi.sdatadirect.ui
 
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
-import android.widget.ListAdapter
 import android.widget.TextView
 import unibas.dmi.sdatadirect.R
 
+/**
+ * ListAdapter to list the bluetooth devices
+ */
 class BluetoothDeviceListAdapter(context: Context, val resource: Int, val devices: ArrayList<BluetoothDevice?>):
     ArrayAdapter<BluetoothDevice>(context, resource, devices) {
 

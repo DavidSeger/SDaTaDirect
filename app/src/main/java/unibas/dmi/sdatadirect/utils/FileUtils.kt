@@ -1,11 +1,13 @@
 package unibas.dmi.sdatadirect.utils
 
 import android.util.Log
-import java.io.DataOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
+/**
+ * FileUtils mainly to write files into outputstream
+ */
 object FileUtils {
 
     private val TAG: String = "FileHandler"
@@ -25,17 +27,13 @@ object FileUtils {
         }
     }
 
-    fun copyFile(inputStreamByteArray: ByteArray, outputStream: OutputStream): Boolean {
+    fun copyFile(inputStreamByteArray: ByteArray, outputStream: OutputStream){
 
         try {
             outputStream.write(inputStreamByteArray)
             outputStream.close()
         } catch (e: IOException) {
             Log.d(TAG, e.toString())
-            return false
         }
-
-        return true
     }
-
 }

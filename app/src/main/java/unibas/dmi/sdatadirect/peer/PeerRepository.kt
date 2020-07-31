@@ -3,8 +3,11 @@ package unibas.dmi.sdatadirect.peer
 import androidx.lifecycle.LiveData
 import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerDao
-import java.text.ParseException
 
+
+/**
+ * Repository to retrieve data from the database via the PeerDao interface
+ */
 class PeerRepository(private val peerDao: PeerDao) {
 
     val allPeers: LiveData<List<Peer>> = peerDao.getAll()

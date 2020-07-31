@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Message
 import android.util.Log
-import android.widget.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
@@ -20,10 +19,7 @@ import unibas.dmi.sdatadirect.ui.BluetoothDeviceListAdapter
 import unibas.dmi.sdatadirect.utils.QRCode
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.lang.Exception
-import java.nio.charset.Charset
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
@@ -58,6 +54,10 @@ class BluetoothDriver(
     val devices: ArrayList<BluetoothDevice?> = ArrayList()
     lateinit var bluetoothDeviceListAdapter: BluetoothDeviceListAdapter
 
+    /**
+     * Checks whether the device contains a Bluetooth adapter or not. Quite all devices have a
+     * Bluetooth adapter and therefore no checking needed.
+     */
     fun checkForBluetoothAdapter(): Boolean {
         if (bluetoothAdapter == null) {
             val builder = AlertDialog.Builder(activity)
@@ -78,6 +78,9 @@ class BluetoothDriver(
         }
     }
 
+    /**
+     * Removes bonded Bluetooth devices after ending the session.
+     */
     fun removePairs(device: BluetoothDevice?) {
         try {
             device!!::class.java.getMethod("removeBond").invoke(device)
@@ -87,6 +90,9 @@ class BluetoothDriver(
 
     }
 
+    /**
+     * Makes the device discoverable for other devices.
+     */
     fun discoverable(enabled: Boolean) {
         if (enabled) {
             Log.d(TAG, "Making device discoverable")
@@ -101,6 +107,9 @@ class BluetoothDriver(
         }
     }
 
+    /**
+     * Starts discovery and looks for available devices in the surrounding.
+     */
     fun startDiscovery() {
         Log.d(TAG, "Looking for unpaired devices.");
         bluetoothAdapter?.startDiscovery()
@@ -179,8 +188,6 @@ class BluetoothDriver(
                     activity.wifiP2pDriver.wantsToBeClient = false
 
 
-
-
                     while(true){
 
                         var peer = peerViewModel.getPeerByBluetoothAddress(it.remoteDevice.address)
@@ -191,7 +198,7 @@ class BluetoothDriver(
                                 name = it.remoteDevice.name,
                                 bluetooth_mac_address = it.remoteDevice.address,
                                 wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
-                                shared_key = cryptoHandler.getSecretKeyEncoded(cryptoHandler.sharedAESKey!!),
+                                shared_key = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!),
                                 public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
                                 private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
                                 foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
@@ -203,8 +210,6 @@ class BluetoothDriver(
                             handler.sendMessage(message)
                         } else {
 
-                            // Retrieve it again after saving
-                            //peer = peerViewModel.getPeerByBluetoothAddress(it.remoteDevice.address)
                             activity.wifiP2pDriver.clientAddress = peer?.wifi_mac_address!!
 
                             val sharedKey = cryptoHandler.getSecretKeyDecoded(peer.shared_key!!)
@@ -244,7 +249,7 @@ class BluetoothDriver(
                                 remotePeer.foreign_public_key!!
                             )
 
-                            // If verification was successul, phase 3 (WiFi-Direct) can be started
+                            // If verification was successful, phase 3 (WiFi-Direct) can be started
                             if (verification) {
                                 val message = Message.obtain()
                                 message.what = activity.VERIFICATION_SUCCESSFUL
@@ -261,9 +266,6 @@ class BluetoothDriver(
                         }
                     }
                 }
-
-
-
             }
         }
 
@@ -325,7 +327,7 @@ class BluetoothDriver(
                 val peer = peerViewModel.getPeerByBluetoothAddress(device?.address!!)
 
                 activity.wifiP2pDriver.wantsToBeClient = true
-                activity.wifiP2pDriver.deviceWantsToConnectTo = peer?.wifi_mac_address!!
+                activity.wifiP2pDriver.targetDeviceAddress = peer?.wifi_mac_address!!
 
 
                 val sharedKey = cryptoHandler.getSecretKeyDecoded(peer.shared_key!!)

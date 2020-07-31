@@ -2,8 +2,10 @@ package unibas.dmi.sdatadirect.database
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import unibas.dmi.sdatadirect.database.Peer
-import javax.crypto.SecretKey
+
+/**
+ * Intefaces defines functions for queries in order to retrieve peer data from the database
+ */
 
 @Dao
 interface PeerDao {

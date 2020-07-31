@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
             MESSAGE_TOAST -> {textView.text = "Couldn't send data"}
             QRCODE -> {
                 val qrCode = QRCode(this)
-                qrCode.showQrCode(msg.obj as Bitmap)
+                qrCode.showQRCode(msg.obj as Bitmap)
             }
 
             PEER_SAVED -> { textView.text = "Peer saved"}
@@ -195,11 +195,11 @@ class MainActivity : AppCompatActivity() {
         qrCodeBtn.setOnClickListener {
             val keyAES = cryptoHandler.keyAESGenerator()
             val keyRSA = cryptoHandler.keyPairRSAGenerator()
-            cryptoHandler.sharedAESKey = keyAES
+            cryptoHandler.secretAESKey = keyAES
             cryptoHandler.publicRSAKey = keyRSA.public
             cryptoHandler.privateRSAKey = keyRSA.private
 
-            val encodedKeyAES = cryptoHandler.getSecretKeyEncoded(cryptoHandler.sharedAESKey!!)
+            val encodedKeyAES = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!)
             val encodedPublicKeyRSA = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!)
 
             var wifiMacAddress: String? = null
@@ -221,7 +221,7 @@ class MainActivity : AppCompatActivity() {
 
             val bitmap = qrCode.generateQRCode("$wifiMacAddress#$encodedKeyAES#$encodedPublicKeyRSA")
 
-            qrCode.showQrCode(bitmap)
+            qrCode.showQRCode(bitmap)
         }
 
         scanQrBtn.setOnClickListener {
@@ -391,10 +391,10 @@ class MainActivity : AppCompatActivity() {
                 val serviceIntent = Intent(this, FileTransferService::class.java).apply {
                     action = FileTransferService.ACTION_SEND_FILE
                     putExtra(FileTransferService.EXTRAS_FILE_PATH, uri?.toString())
-                    putExtra(FileTransferService.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.deviceWantsToConnectTo)
-                    putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                    putExtra(FileTransferService.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.targetDeviceAddress)
+                    putExtra(FileTransferService.EXTRAS_HOST_ADDRESS,
                         wifiP2pDriver.groupOwnerAddress)
-                    putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8888)
+                    putExtra(FileTransferService.EXTRAS_HOST_PORT, 8888)
                     EventBus.getDefault().postSticky(peerViewModel)
                     EventBus.getDefault().postSticky(cryptoHandler)
                 }

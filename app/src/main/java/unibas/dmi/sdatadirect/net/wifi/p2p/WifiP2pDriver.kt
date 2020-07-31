@@ -15,6 +15,9 @@ import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.ui.WifiP2pDeviceListAdapter
 
+/**
+ * Driver class for handling all relevant functionalities to enable WiFi-Direct traffic.
+ */
 class WifiP2pDriver (
     val activity: MainActivity,
     val cryptoHandler: CryptoHandler,
@@ -38,20 +41,10 @@ class WifiP2pDriver (
     var isWifiP2pEnabled: Boolean = true
 
     val peers: MutableList<WifiP2pDevice> = mutableListOf()
-    val deviceNameArray: MutableList<String> = mutableListOf()
-    val deviceArray: MutableList<WifiP2pDevice> = mutableListOf()
-
-    //val listView: ListView = activity.findViewById(R.id.peerView)
-
-    val adapter: ArrayAdapter<WifiP2pDevice> = ArrayAdapter(
-        activity,
-        android.R.layout.simple_list_item_1, peers
-    )
 
     var wantsToBeClient = false
-    lateinit var deviceWantsToConnectTo: String
+    lateinit var targetDeviceAddress: String
     var clientAddress: String = ""
-
 
     var isServer = false
     var isClient = false
@@ -113,6 +106,9 @@ class WifiP2pDriver (
 
     }
 
+    /**
+     * Discovers available devices in the surrounding with WiFi-Direct
+     */
     fun discoverPeers() {
 
         checkPermission()
@@ -154,14 +150,14 @@ class WifiP2pDriver (
 
         manager?.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                /*Toast.makeText(
+                Toast.makeText(
                     activity, "Connected successfully to ${target?.deviceName}",
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.d(
                     TAG,
-                    "Connection to [${target.deviceName}, ${target.deviceAddress}] was successful"
-                )*/
+                    "Connection to [${target?.deviceName}, ${target?.deviceAddress}] was successful"
+                )
             }
 
             override fun onFailure(reason: Int) {
@@ -218,6 +214,7 @@ class WifiP2pDriver (
         })
     }
 
+    // TODO
     fun stop() {
         manager?.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {

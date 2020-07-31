@@ -10,6 +10,9 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import unibas.dmi.sdatadirect.R
 
+/**
+ * List adapter to list the WiFi-Direct devices
+ */
 class WifiP2pDeviceListAdapter(context: Context, val resource: Int, val devices: MutableList<WifiP2pDevice>):
     ArrayAdapter<WifiP2pDevice>(context, resource, devices) {
 

@@ -11,9 +11,11 @@ import androidx.recyclerview.widget.RecyclerView
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.ui.PeerListAdapter
 
+/**
+ * Activity to show the peers table entries from the database
+ */
 class PeerActivity: AppCompatActivity() {
 
-    //private lateinit var peerViewModel: PeerViewModel
     private lateinit var backBtn: Button
     private lateinit var deleteAllBtn: Button
     private lateinit var peerViewModel: PeerViewModel

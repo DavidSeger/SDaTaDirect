@@ -17,6 +17,10 @@ import java.net.ServerSocket
 import java.nio.charset.Charset
 import java.util.*
 
+/**
+ * Asynchronous task to for running server socket. It receives the file sent by some client, verifies,
+ * decrypts and saves it on the device.
+ */
 class FileServerAsyncTask(
     val context: Context,
     val activity: MainActivity,
@@ -26,7 +30,7 @@ class FileServerAsyncTask(
 ): AsyncTask<Void, Void, String>() {
 
     private val TAG = "FileServerAsyncTask"
-    var f: File? = null
+    private var f: File? = null
 
 
     override fun doInBackground(vararg params: Void?): String? {
@@ -42,16 +46,10 @@ class FileServerAsyncTask(
              * connection is accepted from a client.
              */
             val client = serverSocket.accept()
-            //statusText.text = "Connected to Client"
             /**
              * If this code is reached, a client has connected and transferred data
              * Save the input stream from the client as a JPEG file
              * */
-
-            var uriTypeReceived = false
-            var fileRecevied = false
-            var uriType = ""
-
 
             val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
             val inputstream = client.getInputStream()

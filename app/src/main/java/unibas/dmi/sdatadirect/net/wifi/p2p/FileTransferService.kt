@@ -15,6 +15,10 @@ import java.net.Socket
 import java.nio.charset.Charset
 import java.util.*
 
+/**
+ * Service triggered by the main thread after choosing a file. It encrypts and signs the chosen file
+ * and sends it to the host.
+ */
 class FileTransferService: IntentService(FileTransferService::class.simpleName) {
 
     companion object {
@@ -23,18 +27,22 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
         val ACTION_SEND_FILE = "unibas.dmi.sdatadirect.SEND_FILE"
         val EXTRAS_FILE_PATH = "file_url"
         val EXTRAS_DESTINATION_ADDRESS = "desination_address"
-        val EXTRAS_GROUP_OWNER_ADDRESS = "go_host"
-        val EXTRAS_GROUP_OWNER_PORT = "go_port"
+        val EXTRAS_HOST_ADDRESS = "host"
+        val EXTRAS_HOST_PORT = "port"
     }
 
 
+    /**
+     * Handling intent sent by MainActivity. Opens a socket and tries to establish a connection
+     * with the desired host.
+     */
     override fun onHandleIntent(intent: Intent?) {
         val context: Context = applicationContext
         val fileUri: String? = intent?.extras?.getString(EXTRAS_FILE_PATH)
         val destination_address: String? = intent?.extras?.getString(EXTRAS_DESTINATION_ADDRESS)
-        val host: String? = intent?.extras?.getString(EXTRAS_GROUP_OWNER_ADDRESS)
+        val host: String? = intent?.extras?.getString(EXTRAS_HOST_ADDRESS)
         val socket = Socket()
-        val port: Int? = intent?.extras?.getInt(EXTRAS_GROUP_OWNER_PORT)
+        val port: Int? = intent?.extras?.getInt(EXTRAS_HOST_PORT)
 
         val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
         val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
@@ -87,9 +95,6 @@ class FileTransferService: IntentService(FileTransferService::class.simpleName) 
             //FileUtils.copyFile(encodedNode, outStream)
             Log.d(TAG, "Client: Data Written: ${System.currentTimeMillis()}")
             outStream.write(encodedNode)
-
-
-
 
             if (socket.isClosed) {
                 Log.d(TAG, "Client: Is closed")

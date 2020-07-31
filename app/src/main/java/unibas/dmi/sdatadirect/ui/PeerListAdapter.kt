@@ -9,6 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.database.Peer
 
+/**
+ * List adapter to list the entries from the database
+ */
 class PeerListAdapter(context: Context)
     : RecyclerView.Adapter<PeerListAdapter.PeerViewHolder>() {
 

@@ -4,6 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Data class defining Peer entity
+ */
+
 @Entity(tableName = "peer_table")
 data class Peer (
     @PrimaryKey(autoGenerate = true)
