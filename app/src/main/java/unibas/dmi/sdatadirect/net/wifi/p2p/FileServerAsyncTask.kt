@@ -4,20 +4,34 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
-import android.os.Environment
+import android.os.Message
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.MainActivity
-import unibas.dmi.sdatadirect.utils.FileHandler
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
+import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.peer.PeerViewModel
+import unibas.dmi.sdatadirect.utils.FileUtils
+import java.io.*
 import java.net.ServerSocket
+import java.nio.charset.Charset
+import java.util.*
 
-class FileServerAsyncTask(val context: Context): AsyncTask<Void, Void, String>() {
+/**
+ * Asynchronous task to for running server socket. It receives the file sent by some client, verifies,
+ * decrypts and saves it on the device.
+ */
+class FileServerAsyncTask(
+    val context: Context,
+    val activity: MainActivity,
+    val peerViewModel: PeerViewModel,
+    val cryptoHandler: CryptoHandler,
+    val source_device_address: String?
+): AsyncTask<Void, Void, String>() {
 
     private val TAG = "FileServerAsyncTask"
+    private var f: File? = null
+
 
     override fun doInBackground(vararg params: Void?): String? {
         /**
@@ -32,30 +46,55 @@ class FileServerAsyncTask(val context: Context): AsyncTask<Void, Void, String>()
              * connection is accepted from a client.
              */
             val client = serverSocket.accept()
-            //statusText.text = "Connected to Client"
             /**
              * If this code is reached, a client has connected and transferred data
              * Save the input stream from the client as a JPEG file
-             */
+             * */
 
-            val f = File(context.getExternalFilesDir("received"),
-                        "wifip2pshared-${System.currentTimeMillis()}.jpg")
-            val dirs = File(f.parent)
-
-            dirs.takeIf { it.doesNotExist() }?.apply {
-                mkdirs()
-            }
-            f.createNewFile()
+            val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
             val inputstream = client.getInputStream()
-            val fileHandler = FileHandler()
-            fileHandler.copyFile(inputstream.readBytes(), FileOutputStream(f))
+            Log.d(TAG, "Server: Data received: ${System.currentTimeMillis()}")
+
+            val objectMapper = ObjectMapper()
+            val decodedNode = objectMapper.readTree(ByteArrayInputStream(inputstream.readBytes()))
+
+            val receivedFile: ByteArray = Base64.getDecoder().decode(decodedNode.get("file").asText())
+            val receivedType: ByteArray = Base64.getDecoder().decode(decodedNode.get("type").asText())
+            val receivedSignature: ByteArray = Base64.getDecoder().decode(decodedNode.get("signature").asText())
+
+            val verification = cryptoHandler.verifySignature(
+                receivedSignature,
+                receivedFile,
+                peer?.foreign_public_key!!
+            )
+
+            if (verification) {
+                val decryptedFile = cryptoHandler.decryptAES(receivedFile, peer?.shared_key)
+                Log.d(TAG, "Server: File decrypted: ${System.currentTimeMillis()}")
+                f = File(context.getExternalFilesDir("received"),
+                    "wifip2pshared-${System.currentTimeMillis()}.mp4")
+                val dirs = File(f?.parent)
+
+                dirs.takeIf { it.doesNotExist() }?.apply {
+                    mkdirs()
+                }
+                f?.createNewFile()
+
+
+                Log.d(TAG, "Type: ${String(receivedType, Charset.defaultCharset())}")
+
+                FileUtils.copyFile(decryptedFile, FileOutputStream(f))
+            } else {
+                val message = Message.obtain()
+                message.what = activity.VERIFICATION_FAILED
+                activity.handler.sendMessage(message)
+            }
+
 
             serverSocket.close()
-            f.absolutePath
+            f?.absolutePath
         }
     }
-
-
 
     private fun File.doesNotExist(): Boolean = !exists()
 
@@ -69,11 +108,13 @@ class FileServerAsyncTask(val context: Context): AsyncTask<Void, Void, String>()
                 "unibas.dmi.sdatadirect.fileprovider",
                 recvFile
             )
+
             val intent = Intent()
-            intent.action = android.content.Intent.ACTION_VIEW
-            intent.setDataAndType(fileUri, "image/*")
+            intent.action = Intent.ACTION_VIEW
+            intent.setDataAndType(fileUri, "*/*")
             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.startActivity(intent)
+
         }
     }
 

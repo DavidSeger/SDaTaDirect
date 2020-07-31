@@ -1,6 +1,7 @@
 package unibas.dmi.sdatadirect.ui
 
 import android.content.Context
+import android.graphics.Typeface
 import android.net.wifi.p2p.WifiP2pDevice
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,9 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import unibas.dmi.sdatadirect.R
 
+/**
+ * List adapter to list the WiFi-Direct devices
+ */
 class WifiP2pDeviceListAdapter(context: Context, val resource: Int, val devices: MutableList<WifiP2pDevice>):
     ArrayAdapter<WifiP2pDevice>(context, resource, devices) {
 
@@ -22,6 +26,7 @@ class WifiP2pDeviceListAdapter(context: Context, val resource: Int, val devices:
         val deviceAddress: TextView = tempConvertView.findViewById(R.id.deviceAddress)
 
         deviceName.text = device?.deviceName
+        deviceName.setTypeface(null, Typeface.BOLD)
         deviceAddress.text = device?.deviceAddress
 
         return tempConvertView

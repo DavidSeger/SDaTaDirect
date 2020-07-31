@@ -1,33 +1,27 @@
 package unibas.dmi.sdatadirect.net.wifi.p2p
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
-import android.os.AsyncTask
-import android.os.Environment
 import android.util.Log
+import android.view.View
 import android.widget.*
-import androidx.core.content.FileProvider
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.R
-import unibas.dmi.sdatadirect.ui.BluetoothDeviceListAdapter
+import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.ui.WifiP2pDeviceListAdapter
-import unibas.dmi.sdatadirect.utils.FileHandler
-import java.io.*
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.ServerSocket
-import java.net.Socket
-import java.util.jar.Manifest
 
-class WifiP2pDriver (val activity: MainActivity) {
+/**
+ * Driver class for handling all relevant functionalities to enable WiFi-Direct traffic.
+ */
+class WifiP2pDriver (
+    val activity: MainActivity,
+    val cryptoHandler: CryptoHandler,
+    val peerViewModel: PeerViewModel) {
 
     val TAG: String = "WifiP2pDriver"
 
@@ -47,27 +41,15 @@ class WifiP2pDriver (val activity: MainActivity) {
     var isWifiP2pEnabled: Boolean = true
 
     val peers: MutableList<WifiP2pDevice> = mutableListOf()
-    val deviceNameArray: MutableList<String> = mutableListOf()
-    val deviceArray: MutableList<WifiP2pDevice> = mutableListOf()
-
-    val listView: ListView = activity.findViewById(R.id.peerView)
-
-    val adapter: ArrayAdapter<WifiP2pDevice> = ArrayAdapter(
-        activity,
-        android.R.layout.simple_list_item_1, peers
-    )
 
     var wantsToBeClient = false
-    lateinit var deviceWantsToConnectTo: String
-
+    lateinit var targetDeviceAddress: String
+    var clientAddress: String = ""
 
     var isServer = false
     var isClient = false
 
     var groupOwnerAddress: String = ""
-
-    var wifiP2pDeviceListAdapter: WifiP2pDeviceListAdapter =
-        WifiP2pDeviceListAdapter(activity, R.layout.device_adapter_view, peers)
 
     /**
      * DiscoverPeers detects available peers that are in range. If the discovery was successful,
@@ -124,21 +106,28 @@ class WifiP2pDriver (val activity: MainActivity) {
 
     }
 
+    /**
+     * Discovers available devices in the surrounding with WiFi-Direct
+     */
     fun discoverPeers() {
 
         checkPermission()
+
+        activity.listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
+            connect("", peers[i])
+        }
 
         manager?.discoverPeers(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 //...
                 activity.textView.text = "Discovery Started"
-                Log.d(TAG, "Discovery successful")
+                Log.d(TAG, "Discovery started")
             }
 
             override fun onFailure(reasonCode: Int) {
                 //...
                 activity.textView.text = "Discovery Starting failed"
-                Log.d(TAG, "Discovery failed")
+                Log.d(TAG, "Discovery starting failed")
             }
         })
     }
@@ -148,7 +137,7 @@ class WifiP2pDriver (val activity: MainActivity) {
      * will be specified containing the information of the device to connect to. The WifiP2pManager.ActionListener
      * notifies you of a connection success or failure.
      */
-    fun connect(address: String = "", target: WifiP2pDevice? = null) {
+    fun connect(address: String, target: WifiP2pDevice?) {
 
         checkPermission()
 
@@ -161,14 +150,14 @@ class WifiP2pDriver (val activity: MainActivity) {
 
         manager?.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                /*Toast.makeText(
+                Toast.makeText(
                     activity, "Connected successfully to ${target?.deviceName}",
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.d(
                     TAG,
-                    "Connection to [${target.deviceName}, ${target.deviceAddress}] was successful"
-                )*/
+                    "Connection to [${target?.deviceName}, ${target?.deviceAddress}] was successful"
+                )
             }
 
             override fun onFailure(reason: Int) {
@@ -180,25 +169,20 @@ class WifiP2pDriver (val activity: MainActivity) {
     }
 
     val peerListListener = WifiP2pManager.PeerListListener { peerList ->
-        val refreshedPeers = peerList.deviceList
-        if (refreshedPeers != peers) {
+        if (peerList.deviceList != peers) {
             peers.clear()
-            peers.addAll(refreshedPeers)
-            activity.listView.adapter = wifiP2pDeviceListAdapter
-            //(activity.listView.adapter as WifiP2pDeviceListAdapter).notifyDataSetChanged()
-            //wifiP2pDeviceListAdapter.notifyDataSetChanged()
+            peers.addAll(peerList.deviceList)
+
+            if (peerList.deviceList.isEmpty()) {
+                Toast.makeText(activity, "No Device Found", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "No devices found")
+            }
         }
 
-        if (peers.isEmpty()) {
-            Toast.makeText(activity, "No Device Found", Toast.LENGTH_SHORT)
-                .show()
-            Log.d(TAG, "No devices found")
-            activity.listView.adapter = wifiP2pDeviceListAdapter
-            //(activity.listView.adapter as WifiP2pDeviceListAdapter).notifyDataSetChanged()
-            //wifiP2pDeviceListAdapter.notifyDataSetChanged()
-            return@PeerListListener
-        }
+        val wifiP2pDeviceListAdapter = WifiP2pDeviceListAdapter(
+            activity, R.layout.device_adapter_view, peers)
 
+        activity.listView.adapter = wifiP2pDeviceListAdapter
     }
 
     val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { info ->
@@ -207,7 +191,7 @@ class WifiP2pDriver (val activity: MainActivity) {
 
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            FileServerAsyncTask(activity).execute()
+            FileServerAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
             isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
@@ -215,6 +199,7 @@ class WifiP2pDriver (val activity: MainActivity) {
         }
     }
 
+    // TODO: Create a group to integrate also devices without any WiFi support
     fun createGroup() {
         checkPermission()
         manager?.createGroup(channel, object : WifiP2pManager.ActionListener {
@@ -229,6 +214,7 @@ class WifiP2pDriver (val activity: MainActivity) {
         })
     }
 
+    // TODO
     fun stop() {
         manager?.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {

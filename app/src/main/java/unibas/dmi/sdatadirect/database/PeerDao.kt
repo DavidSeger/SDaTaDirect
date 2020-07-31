@@ -1,33 +1,35 @@
 package unibas.dmi.sdatadirect.database
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
-import unibas.dmi.sdatadirect.database.Peer
-import javax.crypto.SecretKey
+
+/**
+ * Intefaces defines functions for queries in order to retrieve peer data from the database
+ */
 
 @Dao
 interface PeerDao {
-    @Query("SELECT * FROM peer")
-    fun getAll(): List<Peer>
+    @Query("SELECT * FROM peer_table")
+    fun getAll(): LiveData<List<Peer>>
 
-    @Query("SELECT * FROM peer WHERE id IN (:Ids)")
-    fun loadAllByIds(Ids: IntArray): List<Peer>
-
-    @Query("SELECT * FROM peer WHERE bluetooth_mac_address LIKE :bluetoothAddress")
+    @Query("SELECT * FROM peer_table WHERE bluetooth_mac_address LIKE :bluetoothAddress")
     fun findByBluetoothAddress(bluetoothAddress: String): Peer?
 
-    @Query("SELECT * FROM peer WHERE wifi_mac_address LIKE :wifiAddress")
+    @Query("SELECT * FROM peer_table WHERE wifi_mac_address LIKE :wifiAddress")
     fun findByWifiAddress(wifiAddress: String): Peer?
 
-    @Query("SELECT * FROM peer WHERE shared_key LIKE :key")
-    fun findByKey(key: String): Peer?
+    @Query("SELECT * FROM peer_table WHERE shared_key LIKE :shared_key")
+    fun findBySharedKey(shared_key: String): Peer?
 
-    @Insert
-    fun insertAll(vararg: Peer)
+    @Query("SELECT * FROM peer_table WHERE public_key LIKE :public_key")
+    fun findByPublicKey(public_key: String): Peer?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(vararg: Peer)
 
     @Delete
-    fun delete(peer: Peer)
+    suspend fun delete(peer: Peer)
 
-    @Query("UPDATE peer SET wifi_mac_address = :wifiAddress WHERE name = :name")
-    fun updatePeer(name: String, wifiAddress: String): Int
-
+    @Query("DELETE FROM peer_table")
+    fun deleteAll()
 }
