@@ -208,6 +208,8 @@ class BluetoothDriver(
                             val message: Message = Message.obtain()
                             message.what = activity.PEER_SAVED
                             handler.sendMessage(message)
+
+                            sleep(3000)
                         } else {
 
                             activity.wifiP2pDriver.clientAddress = peer?.wifi_mac_address!!

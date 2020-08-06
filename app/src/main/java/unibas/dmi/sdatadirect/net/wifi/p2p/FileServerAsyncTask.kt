@@ -72,7 +72,7 @@ class FileServerAsyncTask(
                 val decryptedFile = cryptoHandler.decryptAES(receivedFile, peer?.shared_key)
                 Log.d(TAG, "Server: File decrypted: ${System.currentTimeMillis()}")
                 f = File(context.getExternalFilesDir("received"),
-                    "wifip2pshared-${System.currentTimeMillis()}.mp4")
+                    "wifip2pshared-${System.currentTimeMillis()}.jpg")
                 val dirs = File(f?.parent)
 
                 dirs.takeIf { it.doesNotExist() }?.apply {
