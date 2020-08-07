@@ -1,6 +1,6 @@
 # SDaTaDirect
 
-SDaTaDirect stands for **S**ecured **Da**ta **T**r**a**nsfer via WiFi-**Direct**. This app was built for a Bachelor's project work. 
+SDaTaDirect stands for **S**ecured **Da**ta **T**r**a**nsfer via WiFi-**Direct**. This app was developed for a Bachelor's project work. 
 The aim was to build a protocol for secured data sharing. We used here first the AES algorithm for encryption and decryption and
 RSA together with SHA-256 for the signature.
 
