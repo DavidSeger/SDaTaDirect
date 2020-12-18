@@ -292,7 +292,6 @@ class MainActivity : AppCompatActivity() {
                         val linearLayout = dialog.findViewById<LinearLayout>(R.id.linearLayout)
                         val saveBtn: Button = dialog.findViewById(R.id.saveBtn)
                         val cancelBtn: Button = dialog.findViewById(R.id.button3)
-
                         val newPeer = Peer(
                             name = device.name,
                             bluetooth_mac_address = device.address,
@@ -376,34 +375,32 @@ class MainActivity : AppCompatActivity() {
             val target = Intent(Intent.ACTION_GET_CONTENT)
             target.type = "*/*"
             startActivityForResult(target, CHOOSE_FILE_RESULT_CODE)
+            startChat()
         }
     }
 
+    fun startChat(){
+        val chatIntent = Intent(this, ChatActivity::class.java).apply {
+            action = ChatActivity.ACTION_SEND_CHAT
+            putExtra(ChatActivity.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.targetDeviceAddress)
+            putExtra(ChatActivity.EXTRAS_HOST_ADDRESS,
+                wifiP2pDriver.groupOwnerAddress)
+            putExtra(ChatActivity.EXTRAS_HOST_PORT, 8888)
+            EventBus.getDefault().postSticky(peerViewModel)
+            EventBus.getDefault().postSticky(cryptoHandler)
+        }
+        startActivity(chatIntent)
+    }
+
+    /**
+     * changed this to just set the qr content, dont know if will cause problems later
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-
-        if (requestCode == CHOOSE_FILE_RESULT_CODE && resultCode == Activity.RESULT_OK) {
-            if (data != null) {
-                val uri = data.data
-                textView.text = "Sending"
-                Log.d(TAG, "Intent------------------ $uri")
-                val serviceIntent = Intent(this, FileTransferService::class.java).apply {
-                    action = FileTransferService.ACTION_SEND_FILE
-                    putExtra(FileTransferService.EXTRAS_FILE_PATH, uri?.toString())
-                    putExtra(FileTransferService.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.targetDeviceAddress)
-                    putExtra(FileTransferService.EXTRAS_HOST_ADDRESS,
-                        wifiP2pDriver.groupOwnerAddress)
-                    putExtra(FileTransferService.EXTRAS_HOST_PORT, 8888)
-                    EventBus.getDefault().postSticky(peerViewModel)
-                    EventBus.getDefault().postSticky(cryptoHandler)
-                }
-                startService(serviceIntent)
-            }
-        }  else {
             val result: IntentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
             qrCode.scannedContent = result.contents
-        }
+
     }
 
     override fun onResume() {

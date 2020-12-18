@@ -64,5 +64,6 @@ class QRCode(val activity: MainActivity) {
         val scanner = IntentIntegrator(activity)
         scanner.setOrientationLocked(false)
         scanner.initiateScan()
+
     }
 }

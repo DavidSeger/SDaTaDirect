@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="unibas.dmi.sdatadirect">
 
+
     <uses-permission
         android:name="android.permission.ACCESS_FINE_LOCATION"
         android:required="true" />
@@ -38,10 +39,15 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:largeHeap="true"
         android:theme="@style/AppTheme">
+        <activity
+            android:name=".ChatActivity"
+            android:label="@string/title_activity_chat">
+        </activity>
+
         <meta-data
             android:name="com.google.android.actions"
             android:resource="@xml/filepaths" />
@@ -50,7 +56,6 @@
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"
             tools:replace="screenOrientation" />
-
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -59,9 +64,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".peer.PeerActivity"
+        <activity
+            android:name=".peer.PeerActivity"
             android:parentActivityName=".MainActivity">
+
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

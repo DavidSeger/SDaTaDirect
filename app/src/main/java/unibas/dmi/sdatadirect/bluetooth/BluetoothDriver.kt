@@ -319,7 +319,6 @@ class BluetoothDriver(
             // Cancel discovery because it otherwise slows down the connection.
             bluetoothAdapter?.cancelDiscovery()
             mmSocket?.use { socket ->
-
                 socket.connect()
                 val message: Message = Message.obtain()
                 message.what = activity.STATE_CONNECTED
