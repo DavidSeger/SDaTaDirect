@@ -372,13 +372,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         chooseFileBtn.setOnClickListener {
-            val target = Intent(Intent.ACTION_GET_CONTENT)
-            target.type = "*/*"
-            startActivityForResult(target, CHOOSE_FILE_RESULT_CODE)
             startChat()
         }
     }
 
+    /**
+     * start connections, start chat
+     */
     fun startChat(){
         val chatIntent = Intent(this, ChatActivity::class.java).apply {
             action = ChatActivity.ACTION_SEND_CHAT
@@ -393,11 +393,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * changed this to just set the qr content, dont know if will cause problems later
+     * currently only catching results of QR code and setting that
      */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
             val result: IntentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
             qrCode.scannedContent = result.contents
 

@@ -191,7 +191,7 @@ class WifiP2pDriver (
 
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            FileServerAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+            ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
             isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"

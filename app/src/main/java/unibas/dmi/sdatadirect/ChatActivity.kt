@@ -1,20 +1,18 @@
 package unibas.dmi.sdatadirect
 
 import android.content.Context
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.EditText
+import android.widget.TextView
 import com.fasterxml.jackson.databind.ObjectMapper
-import kotlinx.android.synthetic.main.activity_chat.*
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 import unibas.dmi.sdatadirect.peer.PeerViewModel
-import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -36,13 +34,16 @@ class ChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
 
+        }
+
+    fun sendMessage(view: View) {
+
         val context: Context = applicationContext
         val destination_address: String? = intent?.extras?.getString(FileTransferService.EXTRAS_DESTINATION_ADDRESS)
         val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
         val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
 
         val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
-        val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
 
         try {
 
@@ -59,15 +60,33 @@ class ChatActivity : AppCompatActivity() {
         } catch (e: IOException) {
             Log.e(FileTransferService.TAG, e.message)
         }
-        }
+        val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
+        val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
+        val input: TextView = findViewById<EditText>(R.id.msgInput)
+        val msg: String = input.text.toString()
+        input.text = ""
+        val encryptedString = cryptoHandler.encryptAES(msg.toByteArray(Charsets.UTF_8), peer?.shared_key!!)
 
-    fun sendMessage(view: View) {
-        val msg: String = textView2.text.toString()
-        textView2.text = ""
+        val StringStreamEncodedToString = Base64.getEncoder().encodeToString(encryptedString)
+
+        val signature = cryptoHandler.createSignature(encryptedString, peer.private_key)
+
+        val signatureEncodedToString = Base64.getEncoder().encodeToString(signature)
+
+
+        val json: String =  "{\"string\" : \"$StringStreamEncodedToString\"," +
+                "\"type\" : \"String\"," +
+                "\"signature\" : \"$signatureEncodedToString\"}"
+
+
+        val objectMapper = ObjectMapper()
+        val node = objectMapper.readTree(json)
+        val encodedNode = objectMapper.writeValueAsBytes(node)
+
         val outStream: OutputStream = socket.getOutputStream()
         //FileUtils.copyFile(encodedNode, outStream)
-        outStream.write(msg.toByteArray())
-
+        outStream.write(encodedNode)
+        socket.close()
 
     }
 
