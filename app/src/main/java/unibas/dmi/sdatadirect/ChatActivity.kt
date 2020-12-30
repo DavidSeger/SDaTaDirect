@@ -12,11 +12,12 @@ import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 import unibas.dmi.sdatadirect.peer.PeerViewModel
+import unibas.dmi.sdatadirect.utils.PackageFactory
+import unibas.dmi.sdatadirect.utils.PackageFactory.METHOD.*
 import java.io.IOException
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.nio.charset.Charset
 import java.util.*
 
 class ChatActivity : AppCompatActivity() {
@@ -65,20 +66,21 @@ class ChatActivity : AppCompatActivity() {
         val input: TextView = findViewById<EditText>(R.id.msgInput)
         val msg: String = input.text.toString()
         input.text = ""
-        val encryptedString = cryptoHandler.encryptAES(msg.toByteArray(Charsets.UTF_8), peer?.shared_key!!)
 
-        val StringStreamEncodedToString = Base64.getEncoder().encodeToString(encryptedString)
+        val encryptedPackage = cryptoHandler.encryptAES(PackageFactory.buildPackage(`SEND_STRING`, msg), peer?.shared_key!!)
 
-        val signature = cryptoHandler.createSignature(encryptedString, peer.private_key)
+        val packageStreamEncodedToString = Base64.getUrlEncoder().encodeToString(encryptedPackage)
+
+        val signature = cryptoHandler.createSignature(encryptedPackage, peer.private_key)
 
         val signatureEncodedToString = Base64.getEncoder().encodeToString(signature)
 
 
-        val json: String =  "{\"string\" : \"$StringStreamEncodedToString\"," +
-                "\"type\" : \"String\"," +
+        val json: String =  "{\"package\" : \"$packageStreamEncodedToString\"," +
+                "\"type\" : \"null\"," +
                 "\"signature\" : \"$signatureEncodedToString\"}"
 
-
+        Log.d(TAG, json)
         val objectMapper = ObjectMapper()
         val node = objectMapper.readTree(json)
         val encodedNode = objectMapper.writeValueAsBytes(node)

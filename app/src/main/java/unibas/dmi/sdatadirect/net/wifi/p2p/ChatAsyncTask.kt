@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
+import unibas.dmi.sdatadirect.utils.PackageInterpreter
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.net.ServerSocket
@@ -16,14 +17,16 @@ import java.util.*
 
 /**
  * Asynchronous task to for running server socket. It receives the file sent by some client, verifies,
- * decrypts and saves it on the device.
+ * decrypts and saves it on the device
+ *
  */
 class ChatAsyncTask(
     val context: Context,
     val activity: MainActivity,
     val peerViewModel: PeerViewModel,
     val cryptoHandler: CryptoHandler,
-    val source_device_address: String?
+    val source_device_address: String?,
+    val interpreter: PackageInterpreter = PackageInterpreter(context, activity, peerViewModel)
 ): AsyncTask<Void, Void, String>() {
 
     private val TAG = "ChatAsyncTask"
@@ -52,24 +55,22 @@ class ChatAsyncTask(
              * */
             val objectMapper = ObjectMapper()
             val decodedNode = objectMapper.readTree(ByteArrayInputStream(inputstream.readBytes()))
-
-            val receivedMsg: ByteArray = Base64.getDecoder().decode(decodedNode.get("string").asText())
+            Log.d(TAG, decodedNode.toPrettyString())
+            Log.d(TAG, decodedNode.asText())
+            val receivedPackage: ByteArray = Base64.getUrlDecoder().decode(decodedNode.get("package").asText())
             val receivedType: ByteArray = Base64.getDecoder().decode(decodedNode.get("type").asText())
             val receivedSignature: ByteArray = Base64.getDecoder().decode(decodedNode.get("signature").asText())
 
             val verification = cryptoHandler.verifySignature(
                 receivedSignature,
-                receivedMsg,
+                receivedPackage,
                 peer?.foreign_public_key!!
             )
 
             if (verification) {
-                val decryptedMsg = cryptoHandler.decryptAES(receivedMsg, peer?.shared_key).toString(Charsets.UTF_8)
-                Log.d(TAG, "Server: Msg decrypted: ${System.currentTimeMillis()}")
-                Log.d(TAG, "msg: $decryptedMsg")
-                activity.runOnUiThread {
-                    Toast.makeText(activity, decryptedMsg, Toast.LENGTH_LONG).show()
-                }
+                val decryptedPackage = cryptoHandler.decryptAES(receivedPackage, peer?.shared_key)
+                interpreter.interpret(decryptedPackage)
+                Log.d(TAG, "Server: Package decrypted: ${System.currentTimeMillis()}")
 
                 Log.d(TAG, "Type: ${String(receivedType, Charset.defaultCharset())}")
             } else {
