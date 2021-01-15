@@ -189,14 +189,14 @@ class WifiP2pDriver (
 
         groupOwnerAddress = info.groupOwnerAddress.hostAddress
 
-        if (info.groupFormed && info.isGroupOwner) {
-            activity.textView.text = "Host!"
+        /*if (info.groupFormed && info.isGroupOwner) {
+            activity.textView.text = "Host!"*/
             ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
-            isServer = true
-        } else if (info.groupFormed) {
-            activity.textView.text = "Client!"
-            isClient = true
-        }
+          //  isServer = true
+       // } else if (info.groupFormed) {
+       //     activity.textView.text = "Client!"
+       //     isClient = true
+      //  }
     }
 
     // TODO: Create a group to integrate also devices without any WiFi support

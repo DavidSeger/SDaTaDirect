@@ -7,13 +7,16 @@ import android.widget.Toast
 import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.MessageHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.PackageInterpreter
 import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 import java.io.File
 import java.net.ServerSocket
 import java.nio.charset.Charset
 import java.util.*
+import kotlin.concurrent.thread
 
 /**
  * Asynchronous task to for running server socket. It receives the file sent by some client, verifies,
@@ -26,7 +29,8 @@ class ChatAsyncTask(
     val peerViewModel: PeerViewModel,
     val cryptoHandler: CryptoHandler,
     val source_device_address: String?,
-    val interpreter: PackageInterpreter = PackageInterpreter(context, activity, peerViewModel)
+    val msgHandler: MessageHandler = MessageHandler(context, activity, peerViewModel, cryptoHandler, source_device_address)
+
 ): AsyncTask<Void, Void, String>() {
 
     private val TAG = "ChatAsyncTask"
@@ -45,11 +49,21 @@ class ChatAsyncTask(
              * connection is accepted from a client.
              */
             val client = serverSocket.accept()
-            val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
+            //val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
             val inputstream = client.getInputStream()
-            Log.d(TAG, "Server: Data received: ${System.currentTimeMillis()}")
+            thread(start = true) {
+                val ds = DataInputStream(inputstream)
+                while (true){
+                    var len = ds.readInt()
+                    var h = ByteArray(len)
+                    if (len > 0) {
+                        ds.readFully(h)
+                    }
+                   MessageHandler.msgQueue.add(h)
+                }
+            }
 
-            /**
+           /* /**
              * If this code is reached, a client has connected and transferred data
              * Save the input stream from the client as a JPEG file
              * */
@@ -78,9 +92,7 @@ class ChatAsyncTask(
                 message.what = activity.VERIFICATION_FAILED
                 activity.handler.sendMessage(message)
             }
-
-
-            serverSocket.close()
+*/
             "what"
         }
     }

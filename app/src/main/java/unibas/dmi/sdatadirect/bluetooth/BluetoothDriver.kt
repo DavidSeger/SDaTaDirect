@@ -213,6 +213,7 @@ class BluetoothDriver(
                         } else {
 
                             activity.wifiP2pDriver.clientAddress = peer?.wifi_mac_address!!
+                            activity.wifiP2pDriver.targetDeviceAddress = peer?.wifi_mac_address!!
 
                             val sharedKey = cryptoHandler.getSecretKeyDecoded(peer.shared_key!!)
                             val signature =
@@ -329,6 +330,8 @@ class BluetoothDriver(
 
                 activity.wifiP2pDriver.wantsToBeClient = true
                 activity.wifiP2pDriver.targetDeviceAddress = peer?.wifi_mac_address!!
+                activity.wifiP2pDriver.clientAddress = peer?.wifi_mac_address!!
+
 
 
                 val sharedKey = cryptoHandler.getSecretKeyDecoded(peer.shared_key!!)

@@ -14,6 +14,7 @@ import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.PackageFactory
 import unibas.dmi.sdatadirect.utils.PackageFactory.METHOD.*
+import java.io.DataOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.net.InetSocketAddress
@@ -36,38 +37,38 @@ class ChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_chat)
 
         }
-
     fun sendMessage(view: View) {
+            val context: Context = applicationContext
+            val destination_address: String? =
+                intent?.extras?.getString(FileTransferService.EXTRAS_DESTINATION_ADDRESS)
+            val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
+            val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
 
-        val context: Context = applicationContext
-        val destination_address: String? = intent?.extras?.getString(FileTransferService.EXTRAS_DESTINATION_ADDRESS)
-        val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
-        val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
+            val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
 
-        val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
-
-        try {
+            try {
 
 
-            Log.d(FileTransferService.TAG, "Opening client socket -")
-            socket.bind(null)
-            socket.connect(InetSocketAddress(host, port!!), ChatActivity.SOCKET_TIMEOUT)
+                Log.d(FileTransferService.TAG, "Opening client socket -")
+                if(!socket.isConnected) {
+                    socket.bind(null)
+                    socket.connect(InetSocketAddress(host, port!!), ChatActivity.SOCKET_TIMEOUT)
+                }
+                Log.d(FileTransferService.TAG, "Client socket - ${socket.isConnected}")
+                val cr = context.contentResolver
 
-            Log.d(FileTransferService.TAG, "Client socket - ${socket.isConnected}")
-            val cr = context.contentResolver
+                val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
 
-            val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
-
-        } catch (e: IOException) {
-            Log.e(FileTransferService.TAG, e.message)
-        }
+            } catch (e: IOException) {
+                Log.e(FileTransferService.TAG, e.message)
+            }
         val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
         val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
         val input: TextView = findViewById<EditText>(R.id.msgInput)
         val msg: String = input.text.toString()
         input.text = ""
 
-        val encryptedPackage = cryptoHandler.encryptAES(PackageFactory.buildPackage(`SEND_STRING`, msg), peer?.shared_key!!)
+        val encryptedPackage = cryptoHandler.encryptAES(PackageFactory.buildPayload(`SEND_STRING`, msg), peer?.shared_key!!)
 
         val packageStreamEncodedToString = Base64.getUrlEncoder().encodeToString(encryptedPackage)
 
@@ -84,12 +85,13 @@ class ChatActivity : AppCompatActivity() {
         val objectMapper = ObjectMapper()
         val node = objectMapper.readTree(json)
         val encodedNode = objectMapper.writeValueAsBytes(node)
-
         val outStream: OutputStream = socket.getOutputStream()
-        //FileUtils.copyFile(encodedNode, outStream)
-        outStream.write(encodedNode)
-        socket.close()
+        val dataWriter = DataOutputStream(outStream)
 
+
+        //FileUtils.copyFile(encodedNode, outStream)
+        dataWriter.writeInt(encodedNode.size)
+        dataWriter.write(encodedNode)
     }
 
 }
