@@ -24,6 +24,14 @@ class PeerRepository(private val peerDao: PeerDao) {
         peerDao.insert(peer)
     }
 
+    fun getIpByWifiAddress(wifiAddress: String): String? {
+        return peerDao.getIp(wifiAddress)
+    }
+
+    suspend fun insertIp(ip: String, wifiAddress: String){
+        peerDao.insertIp(ip, wifiAddress)
+    }
+
     fun deleteAll(){
         peerDao.deleteAll()
     }

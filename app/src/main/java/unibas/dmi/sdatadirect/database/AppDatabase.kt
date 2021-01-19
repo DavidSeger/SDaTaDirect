@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
  * Abstract class defining the database
  */
 
-@Database(entities = arrayOf(Peer::class), version = 1)
+@Database(entities = arrayOf(Peer::class), version = 2)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun peersDao(): PeerDao
@@ -34,6 +34,7 @@ abstract class AppDatabase: RoomDatabase() {
                 )
                     .allowMainThreadQueries()
                     .addCallback(AppDatabaseCallback(scope))
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 // return instance
@@ -50,4 +51,5 @@ abstract class AppDatabase: RoomDatabase() {
             super.onOpen(db)
         }
     }
+
 }

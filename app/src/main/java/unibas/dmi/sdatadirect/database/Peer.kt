@@ -32,5 +32,8 @@ data class Peer (
     var private_key: String? = null,
 
     @ColumnInfo(name = "foreign_public_key")
-    var foreign_public_key: String? = null
+    var foreign_public_key: String? = null,
+
+    @ColumnInfo(name = "ip_address")
+    var ip_address: String? = null
 )

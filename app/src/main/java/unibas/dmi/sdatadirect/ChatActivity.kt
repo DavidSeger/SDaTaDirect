@@ -35,33 +35,27 @@ class ChatActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
+        val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
+        val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
+
+        try {
+
+
+            Log.d(FileTransferService.TAG, "Opening client socket -")
+            if(!socket.isConnected) {
+                socket.bind(null)
+                socket.connect(InetSocketAddress(host, port!!), ChatActivity.SOCKET_TIMEOUT)
+            }
+            Log.d(FileTransferService.TAG, "Client socket - ${socket.isConnected}")
+        } catch (e: IOException) {
+            Log.e(FileTransferService.TAG, e.message)
+        }
 
         }
     fun sendMessage(view: View) {
-            val context: Context = applicationContext
-            val destination_address: String? =
-                intent?.extras?.getString(FileTransferService.EXTRAS_DESTINATION_ADDRESS)
-            val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
-            val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
-
-            val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
-
-            try {
-
-
-                Log.d(FileTransferService.TAG, "Opening client socket -")
-                if(!socket.isConnected) {
-                    socket.bind(null)
-                    socket.connect(InetSocketAddress(host, port!!), ChatActivity.SOCKET_TIMEOUT)
-                }
-                Log.d(FileTransferService.TAG, "Client socket - ${socket.isConnected}")
-                val cr = context.contentResolver
-
-                val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
-
-            } catch (e: IOException) {
-                Log.e(FileTransferService.TAG, e.message)
-            }
+        val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)
+        val destination_address: String? =
+            intent?.extras?.getString(FileTransferService.EXTRAS_DESTINATION_ADDRESS)
         val peer = peerViewModel.getPeerByWiFiAddress(destination_address!!)
         val cryptoHandler = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
         val input: TextView = findViewById<EditText>(R.id.msgInput)

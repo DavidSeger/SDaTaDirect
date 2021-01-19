@@ -130,6 +130,7 @@ class WifiP2pDriver (
                 Log.d(TAG, "Discovery starting failed")
             }
         })
+
     }
 
     /**

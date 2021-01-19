@@ -27,6 +27,12 @@ interface PeerDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(vararg: Peer)
 
+    @Query("SELECT ip_address FROM peer_table WHERE wifi_mac_address LIKE :wifiAddress")
+    fun getIp(wifiAddress: String): String?
+
+    @Query("UPDATE peer_table SET ip_address = :ip WHERE wifi_mac_address LIKE :wifiAddress")
+    suspend fun insertIp(ip: String, wifiAddress: String)
+
     @Delete
     suspend fun delete(peer: Peer)
 

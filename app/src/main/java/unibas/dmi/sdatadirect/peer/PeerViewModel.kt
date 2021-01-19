@@ -35,6 +35,14 @@ class PeerViewModel(application: Application): AndroidViewModel(application) {
         return repository.getPeerByWifiAddress(wifiAddress)
     }
 
+    fun getIpByWifiAddress(wifiAddress: String): String? {
+        return repository.getIpByWifiAddress(wifiAddress)
+    }
+
+    fun insertIp(ip: String, wifiAddress: String) = viewModelScope.launch(Dispatchers.IO){
+        repository.insertIp(ip, wifiAddress)
+    }
+
     fun deleteAllPeers(){
        repository.deleteAll()
     }
