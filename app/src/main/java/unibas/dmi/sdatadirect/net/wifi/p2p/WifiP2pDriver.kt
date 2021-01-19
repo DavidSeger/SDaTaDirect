@@ -9,11 +9,15 @@ import android.net.wifi.p2p.WifiP2pManager
 import android.util.Log
 import android.view.View
 import android.widget.*
+import org.greenrobot.eventbus.EventBus
+import unibas.dmi.sdatadirect.ChatActivity
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.ui.WifiP2pDeviceListAdapter
+import java.io.IOException
+import java.net.InetSocketAddress
 
 /**
  * Driver class for handling all relevant functionalities to enable WiFi-Direct traffic.
@@ -169,6 +173,7 @@ class WifiP2pDriver (
         })
     }
 
+
     val peerListListener = WifiP2pManager.PeerListListener { peerList ->
         if (peerList.deviceList != peers) {
             peers.clear()
@@ -190,15 +195,34 @@ class WifiP2pDriver (
 
         groupOwnerAddress = info.groupOwnerAddress.hostAddress
 
-        /*if (info.groupFormed && info.isGroupOwner) {
-            activity.textView.text = "Host!"*/
+        if (info.groupFormed && info.isGroupOwner) {
+            activity.textView.text = "Host!"
             ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
-          //  isServer = true
-       // } else if (info.groupFormed) {
-       //     activity.textView.text = "Client!"
-       //     isClient = true
-      //  }
+            isServer = true
+        } else if (info.groupFormed) {
+            activity.textView.text = "Client!"
+            isClient = true
+            establishConnection()
+            ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+        }
     }
+
+    private fun establishConnection() {
+        val host: String? = groupOwnerAddress
+        val port: Int? = 8888
+
+        try {
+
+
+            Log.d(TAG, "Opening client socket -")
+            ChatActivity.socket.bind(null)
+            ChatActivity.socket.connect(InetSocketAddress(host, port!!), 5000)
+            Log.d(FileTransferService.TAG, "Client socket - ${ChatActivity.socket.isConnected}")
+        } catch (e: IOException) {
+            Log.e(FileTransferService.TAG, e.message)
+        }
+    }
+
 
     // TODO: Create a group to integrate also devices without any WiFi support
     fun createGroup() {

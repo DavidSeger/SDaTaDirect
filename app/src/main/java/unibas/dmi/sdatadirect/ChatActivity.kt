@@ -35,22 +35,6 @@ class ChatActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
-        val host: String? = intent?.extras?.getString(FileTransferService.EXTRAS_HOST_ADDRESS)
-        val port: Int? = intent?.extras?.getInt(FileTransferService.EXTRAS_HOST_PORT)
-
-        try {
-
-
-            Log.d(FileTransferService.TAG, "Opening client socket -")
-            if(!socket.isConnected) {
-                socket.bind(null)
-                socket.connect(InetSocketAddress(host, port!!), ChatActivity.SOCKET_TIMEOUT)
-            }
-            Log.d(FileTransferService.TAG, "Client socket - ${socket.isConnected}")
-        } catch (e: IOException) {
-            Log.e(FileTransferService.TAG, e.message)
-        }
-
         }
     fun sendMessage(view: View) {
         val peerViewModel = EventBus.getDefault().getStickyEvent(PeerViewModel::class.java)

@@ -5,6 +5,7 @@ import android.os.Message
 import android.util.Log
 import android.widget.Toast
 import com.fasterxml.jackson.databind.ObjectMapper
+import unibas.dmi.sdatadirect.ChatActivity
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.MessageHandler
@@ -13,6 +14,7 @@ import unibas.dmi.sdatadirect.utils.PackageInterpreter
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.File
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.nio.charset.Charset
 import java.util.*
@@ -28,7 +30,7 @@ class ChatAsyncTask(
     val activity: MainActivity,
     val peerViewModel: PeerViewModel,
     val cryptoHandler: CryptoHandler,
-    val source_device_address: String?,
+    val source_device_address: String,
     val msgHandler: MessageHandler = MessageHandler(context, activity, peerViewModel, cryptoHandler, source_device_address)
 
 ): AsyncTask<Void, Void, String>() {
@@ -49,6 +51,12 @@ class ChatAsyncTask(
              * connection is accepted from a client.
              */
             val client = serverSocket.accept()
+            peerViewModel.insertIp(client.inetAddress.toString(), source_device_address)
+            if (!ChatActivity.socket.isConnected){
+                ChatActivity.socket.bind(null)
+                Log.d(TAG, client.inetAddress.toString())
+                ChatActivity.socket.connect(InetSocketAddress(client.inetAddress.toString().replace("/", ""), 8888), 5000)
+            }
             //val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
             val inputstream = client.getInputStream()
             thread(start = true) {
