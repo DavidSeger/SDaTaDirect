@@ -11,10 +11,13 @@ import kotlinx.coroutines.CoroutineScope
  * Abstract class defining the database
  */
 
-@Database(entities = arrayOf(Peer::class), version = 2)
+@Database(entities = arrayOf(Peer::class, PeerInfo::class, Message::class, Feed::class), version = 3)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun peersDao(): PeerDao
+    abstract fun feedsDao(): FeedDao
+    abstract fun messagesDao(): MessageDao
+    abstract fun peerInfosDao(): Peer_InfoDao
 
     companion object {
         @Volatile

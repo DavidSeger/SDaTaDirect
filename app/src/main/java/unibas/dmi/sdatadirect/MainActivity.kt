@@ -26,6 +26,9 @@ import com.google.zxing.integration.android.IntentResult
 import org.greenrobot.eventbus.EventBus
 
 import unibas.dmi.sdatadirect.bluetooth.BluetoothDriver
+import unibas.dmi.sdatadirect.content.FeedViewModel
+import unibas.dmi.sdatadirect.content.MessageViewModel
+import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.database.AppDatabase
 import unibas.dmi.sdatadirect.database.Peer
@@ -77,6 +80,11 @@ class MainActivity : AppCompatActivity() {
     lateinit var cryptoHandler: CryptoHandler
     lateinit var qrCode: QRCode
     private lateinit var peerViewModel: PeerViewModel
+    private lateinit var messageViewModel: MessageViewModel
+    private lateinit var feedViewModel: FeedViewModel
+    private lateinit var peerInfoViewModel: PeerInfoViewModel
+
+
 
     var bluetoothActive = false
     var wifiDirectActive = false
@@ -159,6 +167,11 @@ class MainActivity : AppCompatActivity() {
         scanQrBtn = findViewById(R.id.scanQRBtn)
         peersBtn = findViewById(R.id.peersBtn)
         listenBtn = findViewById(R.id.listenBtn)
+
+        messageViewModel = ViewModelProvider(this).get(MessageViewModel::class.java)
+        feedViewModel = ViewModelProvider(this).get(FeedViewModel::class.java)
+        peerInfoViewModel = ViewModelProvider(this).get(PeerInfoViewModel::class.java)
+
 
         intentFilter = IntentFilter()
         intentFilter.apply {

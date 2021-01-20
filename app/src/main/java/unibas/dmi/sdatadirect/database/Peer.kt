@@ -11,7 +11,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "peer_table")
 data class Peer (
     @PrimaryKey(autoGenerate = true)
-    val id: Int? = null,
+    var id: Int? = null,
 
     @ColumnInfo(name = "name")
     var name: String? = null,
@@ -35,5 +35,9 @@ data class Peer (
     var foreign_public_key: String? = null,
 
     @ColumnInfo(name = "ip_address")
-    var ip_address: String? = null
+    var ip_address: String? = null,
+
+    @ColumnInfo(name = "last_sync")
+    var last_sync: Long? = null
+
 )

@@ -3,6 +3,7 @@ package unibas.dmi.sdatadirect.peer
 import androidx.lifecycle.LiveData
 import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerDao
+import unibas.dmi.sdatadirect.database.PeerInfo
 
 
 /**
@@ -28,11 +29,28 @@ class PeerRepository(private val peerDao: PeerDao) {
         return peerDao.getIp(wifiAddress)
     }
 
-    suspend fun insertIp(ip: String, wifiAddress: String){
-        peerDao.insertIp(ip, wifiAddress)
-    }
 
     fun deleteAll(){
         peerDao.deleteAll()
     }
+
+    fun getIp(wifiAddress: String): String?{
+        return peerDao.getIp(wifiAddress)
+    }
+
+    suspend fun insertIp(ip: String, wifiAddress: String){
+        peerDao.insertIp(ip, wifiAddress)
+    }
+
+    fun getLastSync(public_key: String): Long?{
+        return peerDao.getLastSync(public_key)
+    }
+
+    fun getPeerSubscriptions(public_key: String): Array<PeerInfo>?{
+        return peerDao.getPeerSubscriptions(public_key)
+    }
+    fun getPeerId(public_key: String): Int?{
+        return peerDao.getPeerId(public_key)
+    }
+
 }

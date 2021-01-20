@@ -33,6 +33,15 @@ interface PeerDao {
     @Query("UPDATE peer_table SET ip_address = :ip WHERE wifi_mac_address LIKE :wifiAddress")
     suspend fun insertIp(ip: String, wifiAddress: String)
 
+    @Query("SELECT last_sync FROM peer_table WHERE public_key = :public_key")
+    fun getLastSync(public_key: String): Long?
+
+    @Query("SELECT peer_info.* FROM peer_table, peer_info WHERE public_key = :public_key AND peer_id = id")
+    fun getPeerSubscriptions(public_key: String): Array<PeerInfo>?
+
+    @Query("SELECT id FROM peer_table WHERE public_key = :public_key")
+    fun getPeerId(public_key: String): Int?
+
     @Delete
     suspend fun delete(peer: Peer)
 
