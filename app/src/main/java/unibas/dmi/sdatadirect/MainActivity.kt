@@ -2,16 +2,13 @@ package unibas.dmi.sdatadirect
 
 import androidx.appcompat.app.AppCompatActivity
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
-import android.net.Uri
 
 import android.net.wifi.p2p.*
 import android.os.*
@@ -30,17 +27,13 @@ import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
-import unibas.dmi.sdatadirect.database.AppDatabase
 import unibas.dmi.sdatadirect.database.Peer
-import unibas.dmi.sdatadirect.database.PeerDao
-import unibas.dmi.sdatadirect.net.wifi.p2p.FileTransferService
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
 import unibas.dmi.sdatadirect.peer.PeerActivity
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.QRCode
 
-import java.io.IOException
 import java.lang.Exception
 import java.net.NetworkInterface
 
@@ -162,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         discoverableSwitch = findViewById(R.id.discoverableSwitch)
         scanBtn = findViewById(R.id.scanBtn)
         stopConnectivityButton = findViewById(R.id.stopConnectivityBtn)
-        chooseFileBtn = findViewById(R.id.chooseFileBtn)
+        chooseFileBtn = findViewById(R.id.viewFeedsBtn)
         qrCodeBtn = findViewById(R.id.qrCodeButton)
         scanQrBtn = findViewById(R.id.scanQRBtn)
         peersBtn = findViewById(R.id.peersBtn)

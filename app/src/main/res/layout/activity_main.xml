@@ -15,7 +15,7 @@
         android:padding="0dp"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/chooseFileBtn"
+        app:layout_constraintEnd_toStartOf="@+id/viewFeedsBtn"
         app:layout_constraintTop_toBottomOf="@+id/peerView"
         app:layout_constraintVertical_bias="0.61"
         app:srcCompat="@drawable/qr_scan" />
@@ -51,7 +51,7 @@
         android:layout_marginBottom="16dp"
         android:clickable="true"
         android:focusable="true"
-        app:layout_constraintBottom_toTopOf="@+id/chooseFileBtn"
+        app:layout_constraintBottom_toTopOf="@+id/viewFeedsBtn"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@android:drawable/ic_search_category_default" />
 
@@ -79,7 +79,7 @@
         app:layout_constraintVertical_bias="0.316" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/chooseFileBtn"
+        android:id="@+id/viewFeedsBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
@@ -89,7 +89,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/peerView"
         app:layout_constraintVertical_bias="0.6"
-        app:srcCompat="@android:drawable/ic_menu_send" />
+        app:srcCompat="@android:drawable/sym_action_chat" />
 
     <ImageButton
         android:id="@+id/qrCodeButton"
