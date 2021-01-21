@@ -27,6 +27,7 @@ import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Peer
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
@@ -49,11 +50,12 @@ class MainActivity : AppCompatActivity() {
 
     // UI components
     lateinit var listView: ListView
+
     lateinit var discoverableSwitch: Switch
     lateinit var scanBtn: FloatingActionButton
     lateinit var stopConnectivityButton: FloatingActionButton
     lateinit var textView: TextView
-    lateinit var chooseFileBtn: FloatingActionButton
+    lateinit var viewFeedsBtn: FloatingActionButton
     lateinit var qrCodeBtn: ImageButton
     lateinit var scanQrBtn: ImageButton
     lateinit var peersBtn: FloatingActionButton
@@ -155,7 +157,7 @@ class MainActivity : AppCompatActivity() {
         discoverableSwitch = findViewById(R.id.discoverableSwitch)
         scanBtn = findViewById(R.id.scanBtn)
         stopConnectivityButton = findViewById(R.id.stopConnectivityBtn)
-        chooseFileBtn = findViewById(R.id.viewFeedsBtn)
+        viewFeedsBtn = findViewById(R.id.viewFeedsBtn)
         qrCodeBtn = findViewById(R.id.qrCodeButton)
         scanQrBtn = findViewById(R.id.scanQRBtn)
         peersBtn = findViewById(R.id.peersBtn)
@@ -377,7 +379,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        chooseFileBtn.setOnClickListener {
+        viewFeedsBtn.setOnClickListener {
             startChat()
         }
     }
@@ -386,7 +388,7 @@ class MainActivity : AppCompatActivity() {
      * start connections, start chat
      */
     fun startChat(){
-        val chatIntent = Intent(this, ChatActivity::class.java).apply {
+      /*  val chatIntent = Intent(this, ChatActivity::class.java).apply {
             action = ChatActivity.ACTION_SEND_CHAT
             putExtra(ChatActivity.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.targetDeviceAddress)
             putExtra(ChatActivity.EXTRAS_HOST_ADDRESS,
@@ -394,8 +396,13 @@ class MainActivity : AppCompatActivity() {
             putExtra(ChatActivity.EXTRAS_HOST_PORT, 8888)
             EventBus.getDefault().postSticky(peerViewModel)
             EventBus.getDefault().postSticky(cryptoHandler)
+        }*/
+       // startActivity(chatIntent)
+        val feedIntent = Intent(this, feed_overview_activity::class.java).apply {
+           EventBus.getDefault().postSticky(feedViewModel)
         }
-        startActivity(chatIntent)
+        startActivity(feedIntent)
+
     }
 
     /**

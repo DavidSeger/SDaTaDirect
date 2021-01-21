@@ -17,4 +17,7 @@ interface FeedDao {
 
     @Query("UPDATE feed SET subscribed = 0 WHERE `key` = :feed_key")
     fun unsubscribe(feed_key: String)
+
+    @Query("SELECT * FROM feed")
+    fun getAllFeeds(): LiveData<List<Feed>>
 }

@@ -15,4 +15,9 @@
         <item name="android:textAppearance">@android:style/TextAppearance.Large</item>
     </style>
 
+    <style name="Widget.AppTheme.MyView" parent="">
+        <item name="android:background">@color/gray_400</item>
+        <item name="exampleColor">@color/light_blue_400</item>
+    </style>
+
 </resources>
