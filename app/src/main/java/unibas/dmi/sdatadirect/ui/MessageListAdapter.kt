@@ -10,6 +10,9 @@ import android.widget.TextView
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Message
+import java.sql.Timestamp
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MessageListAdapter(context: Context, val resource: Int, val messages: ArrayList<Message>):
     ArrayAdapter<Message>(context, resource, messages) {
@@ -29,9 +32,9 @@ class MessageListAdapter(context: Context, val resource: Int, val messages: Arra
         // Get view for row item
         val rowView = layoutInflater.inflate(R.layout.device_adapter_view, parent, false)
         val msg = rowView.findViewById<TextView>(R.id.deviceName)
-        val publisher = rowView.findViewById<TextView>(R.id.deviceAddress)
+        val publishTime = rowView.findViewById<TextView>(R.id.deviceAddress)
         msg.text = messages[position].content!!.toString(Charsets.UTF_8)
-        publisher.text = messages[position].signature
+        publishTime.text = Date(Timestamp(messages[position].timestamp!!).time).toString()
         return rowView
     }
 

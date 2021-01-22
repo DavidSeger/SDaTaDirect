@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
+import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.ui.FeedListAdapter
 
@@ -28,13 +29,14 @@ class Feed_overview_activity : AppCompatActivity() {
         var feedView = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
         listView = findViewById(R.id.feedView)
         if(feedView.getAllFeeds() != null) {
-            feeds = feedView.getAllFeeds()
+            feeds = feedView.getAllFeeds().toCollection(ArrayList())
         }
         var adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
         listView.adapter = adapter
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
             val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
                 EventBus.getDefault().postSticky(EventBus.getDefault().getStickyEvent(MessageViewModel::class.java))
+                EventBus.getDefault().postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
                 putExtra(MessageActivity.feedkeyTag, adapter.getItem(i)!!.key)
             }
             startActivity(viewMessagesIntent)

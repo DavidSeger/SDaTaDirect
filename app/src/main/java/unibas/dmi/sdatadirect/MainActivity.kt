@@ -12,6 +12,7 @@ import android.graphics.Bitmap
 
 import android.net.wifi.p2p.*
 import android.os.*
+import android.util.EventLog
 
 import android.util.Log
 import android.view.View
@@ -26,9 +27,11 @@ import unibas.dmi.sdatadirect.bluetooth.BluetoothDriver
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
+import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Peer
+import unibas.dmi.sdatadirect.database.Self
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
 import unibas.dmi.sdatadirect.peer.PeerActivity
@@ -78,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messageViewModel: MessageViewModel
     private lateinit var feedViewModel: FeedViewModel
     private lateinit var peerInfoViewModel: PeerInfoViewModel
+    private lateinit var selfViewModel: SelfViewModel
 
 
 
@@ -166,7 +170,7 @@ class MainActivity : AppCompatActivity() {
         messageViewModel = ViewModelProvider(this).get(MessageViewModel::class.java)
         feedViewModel = ViewModelProvider(this).get(FeedViewModel::class.java)
         peerInfoViewModel = ViewModelProvider(this).get(PeerInfoViewModel::class.java)
-
+        selfViewModel = ViewModelProvider(this).get(SelfViewModel::class.java)
 
         intentFilter = IntentFilter()
         intentFilter.apply {
@@ -194,6 +198,16 @@ class MainActivity : AppCompatActivity() {
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
 
         cryptoHandler = CryptoHandler()
+
+        if(selfViewModel.getSelf() == null){
+            var kPair = cryptoHandler.keyPairRSAGenerator()
+            val self = Self(
+                name = "self",
+                privKey = cryptoHandler.getPrivateKeyEncoded(kPair.private),
+                pubKey = cryptoHandler.getPublicKeyEncoded(kPair.public)
+            )
+            selfViewModel.insert(self)
+        }
         qrCode = QRCode(this)
 
         bluetoothDriver = BluetoothDriver(this, handler, qrCode, cryptoHandler, peerViewModel)
@@ -401,6 +415,8 @@ class MainActivity : AppCompatActivity() {
         val feedIntent = Intent(this, Feed_overview_activity::class.java).apply {
            EventBus.getDefault().postSticky(feedViewModel)
             EventBus.getDefault().postSticky(messageViewModel)
+            EventBus.getDefault().postSticky(cryptoHandler)
+            EventBus.getDefault().postSticky(selfViewModel)
         }
         startActivity(feedIntent)
 

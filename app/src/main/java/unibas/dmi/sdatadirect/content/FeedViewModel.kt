@@ -35,7 +35,7 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
         repository.unsubscribe(feed_key)
     }
 
-    fun getAllFeeds(): ArrayList<Feed>{
+    fun getAllFeeds(): Array<Feed>{
        return repository.getAllFeeds()
     }
 

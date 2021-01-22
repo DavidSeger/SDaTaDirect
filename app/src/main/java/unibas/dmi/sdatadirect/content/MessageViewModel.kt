@@ -23,7 +23,6 @@ class MessageViewModel(application: Application): AndroidViewModel(application) 
      */
     fun insert(message: Message) =viewModelScope.launch(Dispatchers.IO) {
         repository.insert(message)
-        MessageActivity.message.add(message)
     }
 
     fun getFullFeed(feed_key: String): ArrayList<Message>{

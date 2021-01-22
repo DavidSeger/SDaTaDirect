@@ -28,7 +28,7 @@ class FeedRepository(private val feedDao: FeedDao) {
         feedDao.unsubscribe(feed_key)
     }
 
-    fun getAllFeeds():ArrayList<Feed>{
-        return feedDao.getAllFeeds().toCollection(ArrayList())
+    fun getAllFeeds():Array<Feed>{
+        return feedDao.getAllFeeds()
     }
 }
