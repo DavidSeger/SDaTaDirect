@@ -19,5 +19,5 @@ interface FeedDao {
     fun unsubscribe(feed_key: String)
 
     @Query("SELECT * FROM feed")
-    fun getAllFeeds(): LiveData<List<Feed>>
+    fun getAllFeeds(): Array<Feed>
 }

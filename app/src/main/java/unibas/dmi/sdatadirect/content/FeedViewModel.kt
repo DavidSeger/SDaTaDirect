@@ -13,12 +13,10 @@ import unibas.dmi.sdatadirect.database.Feed
 class FeedViewModel(application: Application): AndroidViewModel(application) {
 
     private val repository: FeedRepository
-    val allFeeds: LiveData<List<Feed>>
 
     init {
         val feedDao = AppDatabase.getDatabase(application, viewModelScope).feedsDao()
         repository = FeedRepository(feedDao)
-        allFeeds = repository.allFeeds
     }
 
     /**
@@ -35,6 +33,10 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
 
     fun unsubscribe(feed_key: String){
         repository.unsubscribe(feed_key)
+    }
+
+    fun getAllFeeds(): ArrayList<Feed>{
+       return repository.getAllFeeds()
     }
 
 

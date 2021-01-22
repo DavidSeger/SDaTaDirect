@@ -14,7 +14,6 @@ import unibas.dmi.sdatadirect.ui.FeedListAdapter
  */
 class FeedRepository(private val feedDao: FeedDao) {
 
-    val allFeeds: LiveData<List<Feed>> = feedDao.getAllFeeds()
 
     suspend fun insert(vararg: Feed){
         feedDao.insert(vararg)
@@ -27,5 +26,9 @@ class FeedRepository(private val feedDao: FeedDao) {
 
     fun unsubscribe(feed_key: String){
         feedDao.unsubscribe(feed_key)
+    }
+
+    fun getAllFeeds():ArrayList<Feed>{
+        return feedDao.getAllFeeds().toCollection(ArrayList())
     }
 }
