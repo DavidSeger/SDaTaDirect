@@ -398,8 +398,9 @@ class MainActivity : AppCompatActivity() {
             EventBus.getDefault().postSticky(cryptoHandler)
         }*/
        // startActivity(chatIntent)
-        val feedIntent = Intent(this, feed_overview_activity::class.java).apply {
+        val feedIntent = Intent(this, Feed_overview_activity::class.java).apply {
            EventBus.getDefault().postSticky(feedViewModel)
+            EventBus.getDefault().postSticky(messageViewModel)
         }
         startActivity(feedIntent)
 

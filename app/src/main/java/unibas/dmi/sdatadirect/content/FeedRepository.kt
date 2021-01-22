@@ -5,7 +5,7 @@ import android.os.Looper
 import androidx.lifecycle.LiveData
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.FeedDao
-import unibas.dmi.sdatadirect.feed_overview_activity
+import unibas.dmi.sdatadirect.Feed_overview_activity
 import unibas.dmi.sdatadirect.ui.FeedListAdapter
 
 
@@ -17,7 +17,7 @@ class FeedRepository(private val feedDao: FeedDao) {
 
     suspend fun insert(vararg: Feed){
         feedDao.insert(vararg)
-        feed_overview_activity.feeds.add(vararg)
+        Feed_overview_activity.feeds.add(vararg)
     }
 
     fun subscribe(feed_key: String){

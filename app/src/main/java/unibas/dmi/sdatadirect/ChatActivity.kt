@@ -46,7 +46,7 @@ class ChatActivity : AppCompatActivity() {
         val msg: String = input.text.toString()
         input.text = ""
 
-        val encryptedPackage = cryptoHandler.encryptAES(PackageFactory.buildPayload(`SEND_STRING`, msg), peer?.shared_key!!)
+        val encryptedPackage = cryptoHandler.encryptAES(PackageFactory.buildPayload(SEND_STRING, msg), peer?.shared_key!!)
 
         val packageStreamEncodedToString = Base64.getUrlEncoder().encodeToString(encryptedPackage)
 

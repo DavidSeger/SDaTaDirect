@@ -1,17 +1,19 @@
 package unibas.dmi.sdatadirect
 
 import android.app.Dialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.content.FeedViewModel
+import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.ui.FeedListAdapter
 
 
-class feed_overview_activity : AppCompatActivity() {
+class Feed_overview_activity : AppCompatActivity() {
     lateinit var listView: ListView
     lateinit var addButton: Button
     lateinit var inputText: EditText
@@ -23,16 +25,7 @@ class feed_overview_activity : AppCompatActivity() {
                 super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_feed_overview_activity)
         addButton = findViewById(R.id.addFeed)
-        //for testing purposes
-        var feed = Feed(
-            key = "TestFeed",
-            type = "pub",
-            host = "unibas.SDataDirect",
-            port = "8888",
-            subscribed = true
-        )
         var feedView = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
-        feedView.insert(feed)
         listView = findViewById(R.id.feedView)
         if(feedView.getAllFeeds() != null) {
             feeds = feedView.getAllFeeds()
@@ -40,7 +33,11 @@ class feed_overview_activity : AppCompatActivity() {
         var adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
         listView.adapter = adapter
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
-
+            val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
+                EventBus.getDefault().postSticky(EventBus.getDefault().getStickyEvent(MessageViewModel::class.java))
+                putExtra(MessageActivity.feedkeyTag, adapter.getItem(i)!!.key)
+            }
+            startActivity(viewMessagesIntent)
         }
         addButton.setOnClickListener(){
             var addDialog = Dialog(this)
@@ -65,7 +62,6 @@ class feed_overview_activity : AppCompatActivity() {
                 listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
                 addDialog.cancel()
             }
-           // linearLayou
 
         }
         

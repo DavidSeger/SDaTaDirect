@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import unibas.dmi.sdatadirect.MessageActivity
 import unibas.dmi.sdatadirect.database.AppDatabase
 import unibas.dmi.sdatadirect.database.Message
 
@@ -22,10 +23,11 @@ class MessageViewModel(application: Application): AndroidViewModel(application) 
      */
     fun insert(message: Message) =viewModelScope.launch(Dispatchers.IO) {
         repository.insert(message)
+        MessageActivity.message.add(message)
     }
 
-    fun getFullFeed(feed_key: String): Array<Message>{
-        return repository.getFullFeed(feed_key)
+    fun getFullFeed(feed_key: String): ArrayList<Message>{
+        return repository.getFullFeed(feed_key).toCollection(ArrayList())
     }
 
 

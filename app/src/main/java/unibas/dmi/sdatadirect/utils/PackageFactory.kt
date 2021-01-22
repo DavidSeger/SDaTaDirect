@@ -12,7 +12,7 @@ import java.nio.ByteOrder
  */
 class PackageFactory {
     enum class METHOD {
-        `SEND_STRING`
+        SEND_STRING
     }
 
     companion object {

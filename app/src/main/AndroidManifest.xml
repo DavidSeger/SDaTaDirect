@@ -45,10 +45,14 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+
+        <activity
+            android:name=".MessageActivity"
+            android:label="@string/title_activity_message"></activity>
         <activity
             android:name=".addFeedDialog"
-            android:label="@string/title_activity_add_feed_dialog"></activity>
-        <activity android:name=".feed_overview_activity" />
+            android:label="@string/title_activity_add_feed_dialog" />
+        <activity android:name=".Feed_overview_activity" />
         <activity
             android:name=".ChatActivity"
             android:label="@string/title_activity_chat" />
