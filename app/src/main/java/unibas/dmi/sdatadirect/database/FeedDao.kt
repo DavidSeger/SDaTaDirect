@@ -20,4 +20,7 @@ interface FeedDao {
 
     @Query("SELECT * FROM feed")
     fun getAllFeeds(): Array<Feed>
+
+    @Query("SELECT EXISTS(SELECT * FROM feed WHERE `key` = :feed_Key)")
+    fun isKnown(feed_Key: String): Boolean
 }

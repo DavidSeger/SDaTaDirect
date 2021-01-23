@@ -39,5 +39,9 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
        return repository.getAllFeeds()
     }
 
+    fun isKnown(feed_key: String): Boolean{
+        return repository.isKnown(feed_key)
+    }
+
 
 }

@@ -31,4 +31,8 @@ class FeedRepository(private val feedDao: FeedDao) {
     fun getAllFeeds():Array<Feed>{
         return feedDao.getAllFeeds()
     }
+
+    fun isKnown(feed_Key: String): Boolean {
+        return feedDao.isKnown(feed_Key)
+    }
 }

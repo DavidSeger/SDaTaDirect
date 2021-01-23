@@ -9,8 +9,8 @@ import unibas.dmi.sdatadirect.database.Peer_InfoDao
  */
 class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
 
-     fun unsubscribePeer(public_key: String, feed_key: String){
-         peerInfoDao.unsubscribePeer(public_key, feed_key)
+     fun unsubscribePeer(wifiAddress: String, feed_key: String){
+         peerInfoDao.unsubscribePeer(wifiAddress, feed_key)
      }
 
       suspend fun subscribePeer(vararg: PeerInfo){
