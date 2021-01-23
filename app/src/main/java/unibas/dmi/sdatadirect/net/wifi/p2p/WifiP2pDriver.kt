@@ -9,8 +9,6 @@ import android.net.wifi.p2p.WifiP2pManager
 import android.util.Log
 import android.view.View
 import android.widget.*
-import org.greenrobot.eventbus.EventBus
-import unibas.dmi.sdatadirect.ChatActivity
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
@@ -18,6 +16,7 @@ import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.ui.WifiP2pDeviceListAdapter
 import java.io.IOException
 import java.net.InetSocketAddress
+import java.net.Socket
 
 /**
  * Driver class for handling all relevant functionalities to enable WiFi-Direct traffic.
@@ -197,27 +196,28 @@ class WifiP2pDriver (
 
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+            ConnectionListener(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
             isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
             isClient = true
-            establishConnection()
-            ChatAsyncTask(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+            establishConnection(clientAddress)
+            ConnectionListener(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
         }
     }
 
-    private fun establishConnection() {
+    private fun establishConnection(clientAddress: String) {
         val host: String? = groupOwnerAddress
         val port: Int? = 8888
-
+        val sock: Socket = Socket()
         try {
-
-
             Log.d(TAG, "Opening client socket -")
-            ChatActivity.socket.bind(null)
-            ChatActivity.socket.connect(InetSocketAddress(host, port!!), 5000)
-            Log.d(FileTransferService.TAG, "Client socket - ${ChatActivity.socket.isConnected}")
+            sock.bind(null)
+            sock.connect(InetSocketAddress(host, port!!), 5000)
+            if(ConnectionManager.getSocket(clientAddress) == null){
+                    ConnectionManager.addConnection(clientAddress, sock)
+                }
+            Log.d(FileTransferService.TAG, "Client socket - ${ConnectionManager.getSocket(clientAddress)!!.isConnected}")
         } catch (e: IOException) {
             Log.e(FileTransferService.TAG, e.message)
         }

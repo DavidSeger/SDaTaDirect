@@ -54,7 +54,7 @@
             android:label="@string/title_activity_add_feed_dialog" />
         <activity android:name=".Feed_overview_activity" />
         <activity
-            android:name=".ChatActivity"
+            android:name=".net.wifi.p2p.ChatActivity"
             android:label="@string/title_activity_chat" />
 
         <meta-data

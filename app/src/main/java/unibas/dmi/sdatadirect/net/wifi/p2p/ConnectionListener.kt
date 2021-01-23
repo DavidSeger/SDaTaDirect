@@ -1,23 +1,16 @@
 package unibas.dmi.sdatadirect.net.wifi.p2p
 import android.content.Context
 import android.os.AsyncTask
-import android.os.Message
 import android.util.Log
-import android.widget.Toast
-import com.fasterxml.jackson.databind.ObjectMapper
-import unibas.dmi.sdatadirect.ChatActivity
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.MessageHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
-import unibas.dmi.sdatadirect.utils.PackageInterpreter
-import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.ServerSocket
-import java.nio.charset.Charset
-import java.util.*
+import java.net.Socket
 import kotlin.concurrent.thread
 
 /**
@@ -25,7 +18,7 @@ import kotlin.concurrent.thread
  * decrypts and saves it on the device
  *
  */
-class ChatAsyncTask(
+class ConnectionListener(
     val context: Context,
     val activity: MainActivity,
     val peerViewModel: PeerViewModel,
@@ -35,7 +28,7 @@ class ChatAsyncTask(
 
 ): AsyncTask<Void, Void, String>() {
 
-    private val TAG = "ChatAsyncTask"
+    private val TAG = "ConnectionListener"
 
 
     override fun doInBackground(vararg params: Void?): String? {
@@ -52,11 +45,13 @@ class ChatAsyncTask(
              */
             val client = serverSocket.accept()
             peerViewModel.insertIp(client.inetAddress.toString(), source_device_address)
-            if (!ChatActivity.socket.isConnected){
-                ChatActivity.socket.bind(null)
-                Log.d(TAG, client.inetAddress.toString())
-                ChatActivity.socket.connect(InetSocketAddress(client.inetAddress.toString().replace("/", ""), 8888), 5000)
+            if (ConnectionManager.getSocket(source_device_address) == null){
+                var sock = Socket()
+                sock.bind(null)
+                sock.connect(InetSocketAddress(client.inetAddress.toString().replace("/", ""), 8888), 5000)
+                ConnectionManager.addConnection(source_device_address, sock)
             }
+
             //val peer = peerViewModel.getPeerByWiFiAddress(source_device_address!!)
             val inputstream = client.getInputStream()
             thread(start = true) {
@@ -70,37 +65,6 @@ class ChatAsyncTask(
                    MessageHandler.msgQueue.add(h)
                 }
             }
-
-           /* /**
-             * If this code is reached, a client has connected and transferred data
-             * Save the input stream from the client as a JPEG file
-             * */
-            val objectMapper = ObjectMapper()
-            val decodedNode = objectMapper.readTree(ByteArrayInputStream(inputstream.readBytes()))
-            Log.d(TAG, decodedNode.toPrettyString())
-            Log.d(TAG, decodedNode.asText())
-            val receivedPackage: ByteArray = Base64.getUrlDecoder().decode(decodedNode.get("package").asText())
-            val receivedType: ByteArray = Base64.getDecoder().decode(decodedNode.get("type").asText())
-            val receivedSignature: ByteArray = Base64.getDecoder().decode(decodedNode.get("signature").asText())
-
-            val verification = cryptoHandler.verifySignature(
-                receivedSignature,
-                receivedPackage,
-                peer?.foreign_public_key!!
-            )
-
-            if (verification) {
-                val decryptedPackage = cryptoHandler.decryptAES(receivedPackage, peer?.shared_key)
-                interpreter.interpret(decryptedPackage)
-                Log.d(TAG, "Server: Package decrypted: ${System.currentTimeMillis()}")
-
-                Log.d(TAG, "Type: ${String(receivedType, Charset.defaultCharset())}")
-            } else {
-                val message = Message.obtain()
-                message.what = activity.VERIFICATION_FAILED
-                activity.handler.sendMessage(message)
-            }
-*/
             "what"
         }
     }
