@@ -7,6 +7,7 @@ import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.MessageHandler
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import java.io.DataInputStream
+import java.io.EOFException
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -57,12 +58,16 @@ class ConnectionListener(
             thread(start = true) {
                 val ds = DataInputStream(inputstream)
                 while (true){
-                    var len = ds.readInt()
-                    var h = ByteArray(len)
-                    if (len > 0) {
-                        ds.readFully(h)
+                    try {
+                        var len = ds.readInt()
+                        var h = ByteArray(len)
+                        if (len > 0) {
+                            ds.readFully(h)
+                            MessageHandler.msgQueue.add(h)
+                        }
+                    }catch (e: EOFException){
+
                     }
-                   MessageHandler.msgQueue.add(h)
                 }
             }
             "what"

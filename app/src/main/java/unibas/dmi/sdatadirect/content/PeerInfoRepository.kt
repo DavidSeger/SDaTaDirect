@@ -16,4 +16,8 @@ class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
       suspend fun subscribePeer(vararg: PeerInfo){
          peerInfoDao.subscribePeer(vararg)
      }
+
+    fun isSubscribed(wifiAddress: String, feed_key: String):Boolean{
+        return peerInfoDao.isSubscribed(wifiAddress, feed_key)
+    }
 }

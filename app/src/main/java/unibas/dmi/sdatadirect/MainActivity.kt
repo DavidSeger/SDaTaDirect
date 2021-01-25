@@ -32,8 +32,10 @@ import unibas.dmi.sdatadirect.crypto.CryptoHandler
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.Self
+import unibas.dmi.sdatadirect.net.wifi.p2p.ConnectionManager
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
+import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.SetSynchronization
 import unibas.dmi.sdatadirect.peer.PeerActivity
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.QRCode
@@ -189,6 +191,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
+        ConnectionManager.peers = peerViewModel
+        SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel)
 
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)
@@ -198,6 +202,7 @@ class MainActivity : AppCompatActivity() {
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
 
         cryptoHandler = CryptoHandler()
+        ConnectionManager.cryptoHandler = cryptoHandler
 
         if(selfViewModel.getSelf() == null){
             var kPair = cryptoHandler.keyPairRSAGenerator()

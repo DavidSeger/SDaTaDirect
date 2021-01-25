@@ -48,7 +48,6 @@ class MessageHandler(
         val decodedNode = objectMapper.readTree(input)
         val receivedPackage: ByteArray =
             Base64.getUrlDecoder().decode(decodedNode.get("package").asText())
-        val receivedType: ByteArray = Base64.getDecoder().decode(decodedNode.get("type").asText()) //for use later
         val receivedSignature: ByteArray =
             Base64.getDecoder().decode(decodedNode.get("signature").asText())
 
@@ -60,7 +59,7 @@ class MessageHandler(
 
         if (verification) {
             val decryptedPackage = cryptoHandler.decryptAES(receivedPackage, peer?.shared_key)
-            interpreter.interpret(decryptedPackage)
+            interpreter.interpret(decryptedPackage, source_device_address!!)
         } else {
             val message = Message.obtain()
             message.what = activity.VERIFICATION_FAILED

@@ -12,6 +12,7 @@ import android.widget.*
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.R
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
+import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.SetSynchronization
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.ui.WifiP2pDeviceListAdapter
 import java.io.IOException
@@ -200,6 +201,8 @@ class WifiP2pDriver (
             con.execute()
             ConnectionManager.addListener(clientAddress,con)
             isServer = true
+            //Host starts the reconsiliation protocol:
+
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
             isClient = true
@@ -208,6 +211,7 @@ class WifiP2pDriver (
             var con =  ConnectionListener(activity, activity, peerViewModel, cryptoHandler, targetDeviceAddress)
             con.execute()
             ConnectionManager.addListener(targetDeviceAddress,con)
+            SetSynchronization.startSynchronization(targetDeviceAddress)
         }
     }
 

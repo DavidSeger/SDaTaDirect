@@ -27,4 +27,8 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
     fun unsubscribe(wifiAddress: String, feed_key: String){
         repository.unsubscribePeer(wifiAddress, feed_key)
     }
+
+    fun isSubscribed(wifiAddress: String, feed_key: String): Boolean{
+       return repository.isSubscribed(wifiAddress, feed_key)
+    }
 }
