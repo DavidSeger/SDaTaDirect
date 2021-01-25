@@ -196,17 +196,22 @@ class WifiP2pDriver (
 
         if (info.groupFormed && info.isGroupOwner) {
             activity.textView.text = "Host!"
-            ConnectionListener(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+            var con =  ConnectionListener(activity, activity, peerViewModel, cryptoHandler, clientAddress)
+            con.execute()
+            ConnectionManager.addListener(clientAddress,con)
             isServer = true
         } else if (info.groupFormed) {
             activity.textView.text = "Client!"
             isClient = true
-            establishConnection(clientAddress)
-            ConnectionListener(activity, activity, peerViewModel, cryptoHandler, clientAddress).execute()
+            peerViewModel.insertIp(targetDeviceAddress, groupOwnerAddress)
+            establishConnection(targetDeviceAddress)
+            var con =  ConnectionListener(activity, activity, peerViewModel, cryptoHandler, targetDeviceAddress)
+            con.execute()
+            ConnectionManager.addListener(targetDeviceAddress,con)
         }
     }
 
-    private fun establishConnection(clientAddress: String) {
+    private fun establishConnection(hostAddress: String) {
         val host: String? = groupOwnerAddress
         val port: Int? = 8888
         val sock: Socket = Socket()
@@ -214,10 +219,10 @@ class WifiP2pDriver (
             Log.d(TAG, "Opening client socket -")
             sock.bind(null)
             sock.connect(InetSocketAddress(host, port!!), 5000)
-            if(ConnectionManager.getSocket(clientAddress) == null){
-                    ConnectionManager.addConnection(clientAddress, sock)
+            if(ConnectionManager.getSocket(hostAddress) == null){
+                    ConnectionManager.addConnection(hostAddress, sock)
                 }
-            Log.d(FileTransferService.TAG, "Client socket - ${ConnectionManager.getSocket(clientAddress)!!.isConnected}")
+            Log.d(FileTransferService.TAG, "Client socket - ${ConnectionManager.getSocket(hostAddress)!!.isConnected}")
         } catch (e: IOException) {
             Log.e(FileTransferService.TAG, e.message)
         }

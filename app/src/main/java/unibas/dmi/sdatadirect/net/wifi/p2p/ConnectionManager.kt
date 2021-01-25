@@ -24,12 +24,19 @@ class ConnectionManager(){
     companion object {
         val TAG: String = "ConnectionManager"
         val connections: HashMap<String?, Socket> = HashMap()
+        val listeners: HashMap<String?, ConnectionListener> = HashMap()
         val socket: Socket = Socket()
         fun addConnection(wifiMacAddress: String?, sock: Socket){
             connections.put(wifiMacAddress, sock)
         }
         fun getSocket(wifiMacAddress: String?): Socket? {
             return connections.get(wifiMacAddress)
+        }
+        fun addListener(wifiMacAddress: String?, listener: ConnectionListener){
+            listeners.put(wifiMacAddress, listener)
+        }
+        fun getListener(wifiMacAddress: String?): ConnectionListener? {
+            return listeners.get(wifiMacAddress)
         }
     }
 }

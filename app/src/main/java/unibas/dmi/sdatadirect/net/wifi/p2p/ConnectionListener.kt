@@ -44,7 +44,7 @@ class ConnectionListener(
              * connection is accepted from a client.
              */
             val client = serverSocket.accept()
-            peerViewModel.insertIp(client.inetAddress.toString(), source_device_address)
+            peerViewModel.insertIp(client.inetAddress.toString().replace("/", ""), source_device_address)
             if (ConnectionManager.getSocket(source_device_address) == null){
                 var sock = Socket()
                 sock.bind(null)
