@@ -38,6 +38,6 @@ data class Peer (
     var ip_address: String? = null,
 
     @ColumnInfo(name = "last_sync")
-    var last_sync: Long? = 0
+    var last_sync: Long? = 0L
 
 )

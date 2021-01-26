@@ -53,4 +53,8 @@ class PeerRepository(private val peerDao: PeerDao) {
         return peerDao.getPeerId(public_key)
     }
 
+    fun setLastSync(public_key: String, lastSync: Long){
+        peerDao.setLastSync(public_key, lastSync)
+    }
+
 }

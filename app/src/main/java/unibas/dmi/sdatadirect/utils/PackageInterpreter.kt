@@ -8,7 +8,7 @@ import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.SetSynchronization
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.PackageFactory.*
-import unibas.dmi.sdatadirect.utils.PackageFactory.METHOD.DECLARE_FEED_KNOWN
+import unibas.dmi.sdatadirect.utils.PackageFactory.METHOD.SEND_FEED_UPDATE
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -24,7 +24,7 @@ class PackageInterpreter(
         val method: String = node.get("method").asText()
         Log.d(TAG, method)
 
-        if (method == DECLARE_FEED_KNOWN.name){
+        if (method == SEND_FEED_UPDATE.name){
             var feedKey = node.get("feedKey").asText()
             var subscribed = node.get("subscribed").asBoolean()
             SetSynchronization.receiveFeedUpdate(feedKey, subscribed, sender)
@@ -51,6 +51,10 @@ class PackageInterpreter(
         }
         if (method == METHOD.END_PHASE_ONE.name){
             SetSynchronization.receiveEndPhaseOne(sender)
+        }
+        if (method == METHOD.SEND_LAST_SYNC.name){
+            var lastSync = node.get("lastSync").asLong()
+            SetSynchronization.receiveLastSync(sender, lastSync)
         }
 
     }

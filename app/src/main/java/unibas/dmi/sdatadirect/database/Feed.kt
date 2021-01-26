@@ -29,6 +29,9 @@ data class Feed (
      * flag that shows if you yourself are subcribed to the feed
      */
     @ColumnInfo(name = "subscribed")
-    var subscribed: Boolean? = false
+    var subscribed: Boolean? = false,
+
+    @ColumnInfo(name = "last_change")
+    var last_change: Long = 0L
 
 )

@@ -1,7 +1,6 @@
 package unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils
 
-import android.widget.Toast
-import org.greenrobot.eventbus.EventBus
+import android.util.Log
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.database.Feed
@@ -15,6 +14,7 @@ import unibas.dmi.sdatadirect.utils.PackageFactory
  */
 class SetSynchronization() {
     companion object {
+        val TAG = "SetSynchronization"
         var isMaster: Boolean = false
         fun startSynchronization(partner: String) {
             isMaster = true //flag used in communication
@@ -22,6 +22,7 @@ class SetSynchronization() {
             //about all of the feeds it has newly discovered/subscribed to/unsubscribed from
             sendFeedUpdates(partner)
             sendEndPhaseOneFlag(partner)
+            sendLastSync(partner)
         }
 
         private lateinit var peers: PeerViewModel
@@ -68,22 +69,17 @@ class SetSynchronization() {
         }
 
         private fun sendFeedUpdates(receiver: String) {
-            if (peers.getPeerByWiFiAddress(receiver)!!.last_sync!! == 0L) {
-                //case 1: check wether this is the first time meeting with this peer, if yes, a full exchange
-                //about the feeds is needed
-                var myFeeds = feeds.getAllFeeds()
+                //phase 1: get all feeds that have changed something since the last sync,
+                //send for all changed feeds a package notifying the sync partner (if this is
+                //the first time connecting with the partner, the last Sync variable is 0, so it
+                //will get all feeds)
+                var lastSync = peers.getLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!)
+                var myFeeds = feeds.getAllChangedSinceTimestamp(lastSync!!)
+                Log.d(TAG, myFeeds.size.toString())
                 for (f in myFeeds) {
-                    ConnectionManager.sendPackage(receiver, PackageFactory.declareFeedKnown(f))
+                    ConnectionManager.sendPackage(receiver, PackageFactory.sendFeedUpdate(f))
                 }
-            } else {
-                //for testing purposes
-                var myFeeds = feeds.getAllFeeds()
-                for (f in myFeeds) {
-                    ConnectionManager.sendPackage(receiver, PackageFactory.declareFeedKnown(f))
-                }
-            }
         }
-
         fun receiveFeedInquiryAnswer(
             feed: Feed,
             subscribed: Boolean,
@@ -103,6 +99,19 @@ class SetSynchronization() {
             if(!isMaster){
                 sendFeedUpdates(sender)
             }
+        }
+
+        /**
+         * used to synchronize the "last sync" variable across both partners
+         */
+        private fun sendLastSync(receiver: String){
+            var lastSync = System.currentTimeMillis()
+            peers.setLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!, lastSync)
+            ConnectionManager.sendPackage(receiver, PackageFactory.sendLastSync(lastSync))
+        }
+
+        fun receiveLastSync(partner: String, lastSync: Long){
+            peers.setLastSync(peers.getPeerByWiFiAddress(partner)!!.public_key!!, lastSync)
         }
     }
 

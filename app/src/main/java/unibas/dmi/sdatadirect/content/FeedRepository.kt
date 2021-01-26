@@ -3,6 +3,7 @@ package unibas.dmi.sdatadirect.content
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.LiveData
+import androidx.room.Query
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.FeedDao
 import unibas.dmi.sdatadirect.Feed_overview_activity
@@ -17,15 +18,18 @@ class FeedRepository(private val feedDao: FeedDao) {
 
     suspend fun insert(vararg: Feed){
         feedDao.insert(vararg)
+        feedDao.updateLastChange(vararg.key, System.currentTimeMillis())
         Feed_overview_activity.feeds.add(vararg)
     }
 
     fun subscribe(feed_key: String){
         feedDao.subscribe(feed_key)
+        feedDao.updateLastChange(feed_key, System.currentTimeMillis())
     }
 
     fun unsubscribe(feed_key: String){
         feedDao.unsubscribe(feed_key)
+        feedDao.updateLastChange(feed_key, System.currentTimeMillis())
     }
 
     fun getAllFeeds():Array<Feed>{
@@ -39,4 +43,9 @@ class FeedRepository(private val feedDao: FeedDao) {
     fun getFeed(feed_key: String): Feed{
         return feedDao.getFeed(feed_key)
     }
+
+    fun getAllChangedSinceTimestamp(lastSync: Long): Array<Feed>{
+        return feedDao.getAllChangedSinceTimestamp(lastSync)
+    }
+
 }

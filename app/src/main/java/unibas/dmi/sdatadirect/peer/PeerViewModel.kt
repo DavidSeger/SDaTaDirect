@@ -62,4 +62,8 @@ class PeerViewModel(application: Application): AndroidViewModel(application) {
     fun getPeerId(public_key: String): Int?{
         return repository.getPeerId(public_key)
     }
+
+    fun setLastSync(public_key: String, lastSync: Long){
+        repository.setLastSync(public_key, lastSync)
+    }
 }

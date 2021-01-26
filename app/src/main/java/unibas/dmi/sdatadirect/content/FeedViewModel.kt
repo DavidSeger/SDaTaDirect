@@ -47,5 +47,9 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
         return repository.getFeed(feed_key)
     }
 
+    fun getAllChangedSinceTimestamp(lastSync: Long): Array<Feed>{
+        return repository.getAllChangedSinceTimestamp(lastSync)
+    }
+
 
 }

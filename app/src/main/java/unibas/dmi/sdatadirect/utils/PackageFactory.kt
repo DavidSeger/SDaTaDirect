@@ -10,16 +10,17 @@ import unibas.dmi.sdatadirect.database.Feed
  */
 class PackageFactory {
     enum class METHOD {
-        DECLARE_FEED_KNOWN,
+        SEND_FEED_UPDATE,
         INQUIRE_FEED_DETAILS,
         ANSWER_FEED_QUERY,
-        END_PHASE_ONE
+        END_PHASE_ONE,
+        SEND_LAST_SYNC
     }
 
     companion object {
 
-        fun declareFeedKnown(f: Feed): ByteArray {
-            var method = METHOD.DECLARE_FEED_KNOWN
+        fun sendFeedUpdate(f: Feed): ByteArray {
+            var method = METHOD.SEND_FEED_UPDATE
             var feedKey = f.key
             var subscribed = f.subscribed
             val json = "{\"method\" : \"$method\"," +
@@ -56,6 +57,15 @@ class PackageFactory {
             var method = METHOD.END_PHASE_ONE
 
             val json = "{\"method\" : \"$method\"}"
+            val objectMapper = ObjectMapper()
+            val node = objectMapper.readTree(json)
+            val encodedNode = objectMapper.writeValueAsBytes(node)
+            return encodedNode
+        }
+
+        fun sendLastSync(lastSync: Long): ByteArray {
+            var method = METHOD.SEND_LAST_SYNC
+            val json = "{\"method\" : \"$method\", \"lastSync\" : \"$lastSync\"}"
             val objectMapper = ObjectMapper()
             val node = objectMapper.readTree(json)
             val encodedNode = objectMapper.writeValueAsBytes(node)

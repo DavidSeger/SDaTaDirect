@@ -26,4 +26,10 @@ interface FeedDao {
 
     @Query("SELECT * FROM feed WHERE `key` = :feed_key")
     fun getFeed(feed_key: String): Feed
+
+    @Query("SELECT * FROM feed WHERE last_change >= :lastSync")
+    fun getAllChangedSinceTimestamp(lastSync: Long): Array<Feed>
+
+    @Query("UPDATE feed SET last_change = :l WHERE `key` = :feed_key")
+    fun updateLastChange(feed_key: String, l: Long)
 }
