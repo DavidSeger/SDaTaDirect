@@ -20,8 +20,8 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
     /**
      * Launching a new coroutine to insert the data in a non-blocking way
      */
-    fun subscribe(peerInfo: PeerInfo) =viewModelScope.launch(Dispatchers.IO) {
-        repository.subscribePeer(peerInfo)
+    fun insert(peerInfo: PeerInfo) =viewModelScope.launch(Dispatchers.IO) {
+        repository.insert(peerInfo)
     }
 
     fun unsubscribe(wifiAddress: String, feed_key: String){
@@ -30,5 +30,17 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
 
     fun isSubscribed(wifiAddress: String, feed_key: String): Boolean{
        return repository.isSubscribed(wifiAddress, feed_key)
+    }
+
+    fun get(receiver: String): Array<PeerInfo> {
+        return repository.get(receiver)
+    }
+
+    fun exists(receiver: String, feed_key: String):Boolean{
+        return repository.exists(receiver, feed_key)
+    }
+
+    fun subscribe(peerAddress: String, feedkey: String) {
+        repository.subscribePeer(peerAddress, feedkey)
     }
 }

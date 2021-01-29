@@ -14,7 +14,9 @@ class PackageFactory {
         INQUIRE_FEED_DETAILS,
         ANSWER_FEED_QUERY,
         END_PHASE_ONE,
-        SEND_LAST_SYNC
+        SEND_LAST_SYNC,
+        SEND_FEED_WITH_NEWS,
+        END_PHASE_TWO
     }
 
     companion object {
@@ -25,20 +27,14 @@ class PackageFactory {
             var subscribed = f.subscribed
             val json = "{\"method\" : \"$method\"," +
                     "\"feedKey\" :  \"$feedKey\", \"subscribed\" : \"$subscribed\"}"
-            val objectMapper = ObjectMapper()
-            val node = objectMapper.readTree(json)
-            val encodedNode = objectMapper.writeValueAsBytes(node)
-            return encodedNode
+            return encode(json)
         }
 
         fun inquireFeedDetails(feedkey: String): ByteArray {
             var method = METHOD.INQUIRE_FEED_DETAILS
             val json = "{\"method\" : \"$method\"," +
                     "\"feedKey\" : \"$feedkey\"}"
-            val objectMapper = ObjectMapper()
-            val node = objectMapper.readTree(json)
-            val encodedNode = objectMapper.writeValueAsBytes(node)
-            return encodedNode
+            return encode(json)
         }
 
         fun answerFeedInquiry(f: Feed): ByteArray {
@@ -47,30 +43,43 @@ class PackageFactory {
             val json = "{\"method\" : \"$method\"," +
                     "\"feedKey\" : \"${f.key}\", \"type\" : \"${f.type}\", \"host\" : " +
                     "\"${f.host}\", \"port\" : \"${f.port}\", \"subscribed\" : \"${f.subscribed}\"}"
-            val objectMapper = ObjectMapper()
-            val node = objectMapper.readTree(json)
-            val encodedNode = objectMapper.writeValueAsBytes(node)
-            return encodedNode
+            return encode(json)
         }
 
         fun endPhaseOne(): ByteArray {
             var method = METHOD.END_PHASE_ONE
 
             val json = "{\"method\" : \"$method\"}"
+            return encode(json)
+        }
+
+        fun sendLastSync(lastSync: Long): ByteArray {
+            var method = METHOD.SEND_LAST_SYNC
+            val json = "{\"method\" : \"$method\", \"lastSync\" : \"$lastSync\"}"
+            return encode(json)
+        }
+
+        fun sendFeedsWithNews(f: Feed): ByteArray {
+            var method = METHOD.SEND_FEED_WITH_NEWS
+            val json = "{\"method\" : \"$method\", \"feedKey\" : \"${f.key}\"}"
+            return encode(json)
+
+        }
+
+        fun endPhaseTwo(): ByteArray {
+            var method = METHOD.END_PHASE_TWO
+
+            val json = "{\"method\" : \"$method\"}"
+            return encode(json)
+        }
+
+        private fun encode(json: String): ByteArray{
             val objectMapper = ObjectMapper()
             val node = objectMapper.readTree(json)
             val encodedNode = objectMapper.writeValueAsBytes(node)
             return encodedNode
         }
 
-        fun sendLastSync(lastSync: Long): ByteArray {
-            var method = METHOD.SEND_LAST_SYNC
-            val json = "{\"method\" : \"$method\", \"lastSync\" : \"$lastSync\"}"
-            val objectMapper = ObjectMapper()
-            val node = objectMapper.readTree(json)
-            val encodedNode = objectMapper.writeValueAsBytes(node)
-            return encodedNode
-        }
 
 
     }

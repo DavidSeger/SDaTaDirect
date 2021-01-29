@@ -55,6 +55,7 @@ class MessageActivity(): AppCompatActivity(){
                 )
                 msgPublish.text.clear()
                 hideKeyboard(this)
+
                 messageView.insert(testMessage)
                 message.add(testMessage)
                 adapter.notifyDataSetChanged()

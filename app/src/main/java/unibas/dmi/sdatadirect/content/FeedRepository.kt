@@ -48,4 +48,13 @@ class FeedRepository(private val feedDao: FeedDao) {
         return feedDao.getAllChangedSinceTimestamp(lastSync)
     }
 
+    fun getPeerSubscribedFeedsWithChanges(wifiAddress: String, lastSync: Long): Array<Feed>{
+        return feedDao.getPeerSubscribedFeedsWithChanges(wifiAddress, lastSync)
+    }
+
+
+    fun updateLastReceivedMessage(timestamp: Long, feedKey: String){
+        feedDao.updateLastReceivedMessage(timestamp, feedKey)
+    }
+
 }

@@ -171,6 +171,7 @@ class MainActivity : AppCompatActivity() {
 
         messageViewModel = ViewModelProvider(this).get(MessageViewModel::class.java)
         feedViewModel = ViewModelProvider(this).get(FeedViewModel::class.java)
+        messageViewModel.feeds = feedViewModel
         peerInfoViewModel = ViewModelProvider(this).get(PeerInfoViewModel::class.java)
         selfViewModel = ViewModelProvider(this).get(SelfViewModel::class.java)
 

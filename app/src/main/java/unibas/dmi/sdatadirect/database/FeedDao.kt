@@ -2,6 +2,7 @@ package unibas.dmi.sdatadirect.database
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import java.sql.Timestamp
 
 /**
  * Intefaces defines functions for queries in order to retrieve Feed data from DB
@@ -32,4 +33,10 @@ interface FeedDao {
 
     @Query("UPDATE feed SET last_change = :l WHERE `key` = :feed_key")
     fun updateLastChange(feed_key: String, l: Long)
+
+    @Query("SELECT feed.* FROM feed, peer_info WHERE isSubscribed = 'true' AND peer_info.peer_id = (SELECT peer_id FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND last_received_message >= :lastSync AND feed_key = `key`")
+    fun getPeerSubscribedFeedsWithChanges(wifiAddress: String, lastSync: Long): Array<Feed>
+
+    @Query("UPDATE feed SET last_received_message = :timestamp WHERE `key` = :feedKey")
+    fun updateLastReceivedMessage(timestamp: Long, feedKey: String)
 }

@@ -56,6 +56,13 @@ class PackageInterpreter(
             var lastSync = node.get("lastSync").asLong()
             SetSynchronization.receiveLastSync(sender, lastSync)
         }
+        if (method == METHOD.SEND_FEED_WITH_NEWS.name){
+            var feedKey = node.get("feedKey").asText()
+            SetSynchronization.receiveFeedWithNews(sender, feedKey)
+        }
+        if (method == METHOD.END_PHASE_TWO.name){
+            SetSynchronization.receiveEndPhaseTwo(sender)
+        }
 
     }
 

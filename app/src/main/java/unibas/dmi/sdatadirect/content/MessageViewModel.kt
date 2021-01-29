@@ -12,10 +12,12 @@ import unibas.dmi.sdatadirect.database.Message
 class MessageViewModel(application: Application): AndroidViewModel(application) {
 
     private val repository: MessageRepository
+    lateinit var feeds: FeedViewModel
 
     init {
         val messageDao = AppDatabase.getDatabase(application, viewModelScope).messagesDao()
         repository = MessageRepository(messageDao)
+
     }
 
     /**
@@ -23,6 +25,7 @@ class MessageViewModel(application: Application): AndroidViewModel(application) 
      */
     fun insert(message: Message) =viewModelScope.launch(Dispatchers.IO) {
         repository.insert(message)
+        feeds.updateLastReceivedMessage(System.currentTimeMillis(), message.feed_key!!)
     }
 
     fun getFullFeed(feed_key: String): ArrayList<Message>{

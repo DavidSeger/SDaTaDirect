@@ -19,7 +19,14 @@ import androidx.room.PrimaryKey
  * Data class for relation between Peers and their subscribed tables, id = peer id, key = feed id
  */
 data class PeerInfo(
-    @PrimaryKey()
+    @PrimaryKey(autoGenerate = true)
+    val peerInfo_id: Long = 0L,
+
+    @ColumnInfo(name = "peer_id")
     val peer_id: Int,
-    val feed_key: String
+    @ColumnInfo(name = "feed_key")
+    val feed_key: String,
+
+    @ColumnInfo(name = "isSubscribed")
+    var isSubscribed: Boolean = true
 )

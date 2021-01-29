@@ -31,7 +31,15 @@ data class Feed (
     @ColumnInfo(name = "subscribed")
     var subscribed: Boolean? = false,
 
+    /**
+     * the last time a change to the feed itself was made (subscribed, unsubscribed, inserted etc.)
+     */
     @ColumnInfo(name = "last_change")
-    var last_change: Long = 0L
+    var last_change: Long = 0L,
 
+    /**
+     * the last time a message in this feed was received
+     */
+    @ColumnInfo(name = "last_received_message")
+    var last_received_message: Long = 0L
 )
