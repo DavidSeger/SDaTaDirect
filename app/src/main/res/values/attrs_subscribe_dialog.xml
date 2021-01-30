@@ -1,0 +1,8 @@
+<resources>
+    <declare-styleable name="subscribeDialog">
+        <attr name="exampleString" />
+        <attr name="exampleDimension"/>
+        <attr name="exampleColor"  />
+        <attr name="exampleDrawable" />
+    </declare-styleable>
+</resources>

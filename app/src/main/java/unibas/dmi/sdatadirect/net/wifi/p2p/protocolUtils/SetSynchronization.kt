@@ -23,7 +23,6 @@ class SetSynchronization() {
             //about all of the feeds it has newly discovered/subscribed to/unsubscribed from
             sendFeedUpdates(partner)
             sendEndPhaseOneFlag(partner)
-            //  sendLastSync(partner)
         }
 
 
@@ -82,7 +81,6 @@ class SetSynchronization() {
             //send for all changed feeds a package notifying the sync partner (if this is
             //the first time connecting with the partner, the last Sync variable is 0, so it
             //will get all feeds)
-            var peerInf = peerInfos.get(receiver)
             var lastSync = peers.getLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!)
             var myFeeds = feeds.getAllChangedSinceTimestamp(lastSync!!)
             Log.d(TAG, myFeeds.size.toString())

@@ -1,11 +1,13 @@
 package unibas.dmi.sdatadirect
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_feed_overview_activity.*
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
@@ -18,33 +20,63 @@ class Feed_overview_activity : AppCompatActivity() {
     lateinit var listView: ListView
     lateinit var addButton: Button
     lateinit var inputText: EditText
-    companion object{
+
+    companion object {
         var feeds: ArrayList<Feed> = ArrayList()
         val tag = "FEED_OVERVIEW_ACTIVITY"
+        lateinit var feedViewModel: FeedViewModel
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-                super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_feed_overview_activity)
         addButton = findViewById(R.id.addFeed)
-        var feedView = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
+        feedViewModel = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
         listView = findViewById(R.id.feedView)
-        if(feedView.getAllFeeds() != null) {
-            feeds = feedView.getAllFeeds().toCollection(ArrayList())
+        if (feedViewModel.getAllFeeds() != null) {
+            feeds = feedViewModel.getAllFeeds().toCollection(ArrayList())
+            feeds.sortBy { it.key }
         }
         var adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
         listView.adapter = adapter
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
-            val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
-                EventBus.getDefault().postSticky(EventBus.getDefault().getStickyEvent(MessageViewModel::class.java))
-                EventBus.getDefault().postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
-                putExtra(MessageActivity.feedkeyTag, adapter.getItem(i)!!.key)
+            if(adapter.getItem(i)!!.subscribed!!) {
+                val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
+                    EventBus.getDefault()
+                        .postSticky(
+                            EventBus.getDefault().getStickyEvent(MessageViewModel::class.java)
+                        )
+                    EventBus.getDefault()
+                        .postSticky(EventBus.getDefault().getStickyEvent(FeedViewModel::class.java))
+                    EventBus.getDefault()
+                        .postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
+                    putExtra(MessageActivity.feedkeyTag, adapter.getItem(i)!!.key)
+                    putExtra(MessageActivity.feedPosTag, i)
+                }
+                startActivityForResult(viewMessagesIntent, 1)
+            } else{
+                var addDialog = Dialog(this)
+                addDialog.setContentView(R.layout.sample_subscribe_dialog)
+                var subButton: Button = addDialog.findViewById(R.id.subscribeButton)
+                var cancelButton: Button = addDialog.findViewById(R.id.cancelButton)
+                subButton.setOnClickListener(){
+                    feedViewModel.subscribe(adapter.getItem(i)!!.key)
+                    feeds.removeAt(i)
+                    feeds.sortBy { it.key }
+                    listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
+                    addDialog.cancel()
+                }
+                cancelButton.setOnClickListener(){
+                    addDialog.cancel()
+                }
+                addDialog.show()
             }
-            startActivity(viewMessagesIntent)
+
         }
-        addButton.setOnClickListener(){
+        addButton.setOnClickListener() {
             var addDialog = Dialog(this)
             addDialog.setContentView(R.layout.sample_add_feed_dialog)
-           // val linearLayout = addDialog.findViewById<LinearLayout>(R.id.linearLayout)
+            // val linearLayout = addDialog.findViewById<LinearLayout>(R.id.linearLayout)
             val saveBtn: Button = addDialog.findViewById(R.id.saveFeedButton)
             val nameField: EditText = addDialog.findViewById(R.id.name)
             val typeField: EditText = addDialog.findViewById(R.id.type)
@@ -60,13 +92,28 @@ class Feed_overview_activity : AppCompatActivity() {
                     port = portField.text.toString(),
                     subscribed = subscribedSwitch.isChecked
                 )
-                feedView.insert(feed)
+                feedViewModel.insert(feed)
+                feeds.sortBy { it.key }
                 listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
                 addDialog.cancel()
             }
 
         }
-        
+
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            feeds.sortBy { it.key }
+            listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
+
+        }
+
     }
 
 }

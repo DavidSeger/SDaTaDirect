@@ -2,6 +2,7 @@ package unibas.dmi.sdatadirect
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -9,6 +10,7 @@ import android.widget.EditText
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import org.greenrobot.eventbus.EventBus
+import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.crypto.CryptoHandler
@@ -24,6 +26,7 @@ class MessageActivity(): AppCompatActivity(){
         var message: ArrayList<Message> = ArrayList()
         val tag = "MESSAGE_ACTIVITY_VIEW"
         val feedkeyTag = "UNIBAS_SDATA_FEEDKEY"
+        val feedPosTag = "UNIBAS_SDATA_FEEDPOS"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +63,16 @@ class MessageActivity(): AppCompatActivity(){
                 message.add(testMessage)
                 adapter.notifyDataSetChanged()
             }
+        }
+        var unsub: Button = findViewById(R.id.unsubscribeButton)
+        unsub.setOnClickListener(){
+            Feed_overview_activity.feeds.removeAt(intent.getIntExtra(feedPosTag, -1))
+            EventBus.getDefault().getStickyEvent(FeedViewModel::class.java).unsubscribe(feedkey)
+            val returnIntent = Intent()
+            var i = intent.getIntExtra(feedPosTag, -1)
+            returnIntent.putExtra("result", i)
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
         }
     }
     fun hideKeyboard(activity: Activity) {

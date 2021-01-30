@@ -25,11 +25,13 @@ class FeedRepository(private val feedDao: FeedDao) {
     fun subscribe(feed_key: String){
         feedDao.subscribe(feed_key)
         feedDao.updateLastChange(feed_key, System.currentTimeMillis())
+        Feed_overview_activity.feeds.add(getFeed(feed_key))
     }
 
     fun unsubscribe(feed_key: String){
         feedDao.unsubscribe(feed_key)
         feedDao.updateLastChange(feed_key, System.currentTimeMillis())
+        Feed_overview_activity.feeds.add(getFeed(feed_key))
     }
 
     fun getAllFeeds():Array<Feed>{
