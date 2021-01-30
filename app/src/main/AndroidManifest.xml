@@ -83,19 +83,6 @@
                 android:value=".MainActivity" />
         </activity>
 
-        <service
-            android:name=".net.wifi.p2p.FileTransferService"
-            android:enabled="true" />
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="unibas.dmi.sdatadirect.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
-        </provider>
     </application>
 
 </manifest>

@@ -226,9 +226,9 @@ class WifiP2pDriver (
             if(ConnectionManager.getSocket(hostAddress) == null){
                     ConnectionManager.addConnection(hostAddress, sock)
                 }
-            Log.d(FileTransferService.TAG, "Client socket - ${ConnectionManager.getSocket(hostAddress)!!.isConnected}")
+            Log.d(TAG, "Client socket - ${ConnectionManager.getSocket(hostAddress)!!.isConnected}")
         } catch (e: IOException) {
-            Log.e(FileTransferService.TAG, e.message)
+            Log.e(TAG, e.message)
         }
     }
 
