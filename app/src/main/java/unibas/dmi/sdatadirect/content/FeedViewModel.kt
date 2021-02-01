@@ -60,6 +60,9 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
         repository.updateLastReceivedMessage(timestamp, feedKey)
     }
 
+    fun isOwner(feedKey: String): Boolean{
+        return repository.isOwner(feedKey)
+    }
 
 
 }

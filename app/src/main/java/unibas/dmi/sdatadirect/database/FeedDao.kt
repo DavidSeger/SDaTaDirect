@@ -39,4 +39,7 @@ interface FeedDao {
 
     @Query("UPDATE feed SET last_received_message = :timestamp WHERE `key` = :feedKey")
     fun updateLastReceivedMessage(timestamp: Long, feedKey: String)
+
+    @Query("SELECT owner FROM feed WHERE `key` = :feedKey")
+    fun isOwner(feedKey: String): Boolean
 }

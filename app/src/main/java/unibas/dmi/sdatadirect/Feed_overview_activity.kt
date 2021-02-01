@@ -40,7 +40,8 @@ class Feed_overview_activity : AppCompatActivity() {
         var adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
         listView.adapter = adapter
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
-            if(adapter.getItem(i)!!.subscribed!!) {
+            var f = adapter.getItem(i)!!
+            if(f.subscribed!!) {
                 val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
                     EventBus.getDefault()
                         .postSticky(
@@ -50,8 +51,10 @@ class Feed_overview_activity : AppCompatActivity() {
                         .postSticky(EventBus.getDefault().getStickyEvent(FeedViewModel::class.java))
                     EventBus.getDefault()
                         .postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
-                    putExtra(MessageActivity.feedkeyTag, adapter.getItem(i)!!.key)
+                    putExtra(MessageActivity.feedkeyTag, f.key)
                     putExtra(MessageActivity.feedPosTag, i)
+                    putExtra(MessageActivity.feedOwnerTag, f.owner)
+                    putExtra(MessageActivity.feedTypeTag, f.type)
                 }
                 startActivityForResult(viewMessagesIntent, 1)
             } else{
@@ -60,7 +63,7 @@ class Feed_overview_activity : AppCompatActivity() {
                 var subButton: Button = addDialog.findViewById(R.id.subscribeButton)
                 var cancelButton: Button = addDialog.findViewById(R.id.cancelButton)
                 subButton.setOnClickListener(){
-                    feedViewModel.subscribe(adapter.getItem(i)!!.key)
+                    feedViewModel.subscribe(f.key)
                     feeds.removeAt(i)
                     feeds.sortBy { it.key }
                     listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
@@ -79,7 +82,7 @@ class Feed_overview_activity : AppCompatActivity() {
             // val linearLayout = addDialog.findViewById<LinearLayout>(R.id.linearLayout)
             val saveBtn: Button = addDialog.findViewById(R.id.saveFeedButton)
             val nameField: EditText = addDialog.findViewById(R.id.name)
-            val typeField: EditText = addDialog.findViewById(R.id.type)
+            val type: Switch = addDialog.findViewById(R.id.type)
             val hostField: EditText = addDialog.findViewById(R.id.host)
             val portField: EditText = addDialog.findViewById(R.id.port)
             val subscribedSwitch: Switch = addDialog.findViewById(R.id.subscribed)
@@ -87,10 +90,11 @@ class Feed_overview_activity : AppCompatActivity() {
             saveBtn.setOnClickListener {
                 var feed = Feed(
                     key = nameField.text.toString(),
-                    type = typeField.text.toString(),
+                    type = if(type.isChecked) "Pub" else "Private",
                     host = hostField.text.toString(),
                     port = portField.text.toString(),
-                    subscribed = subscribedSwitch.isChecked
+                    subscribed = subscribedSwitch.isChecked,
+                    owner = true
                 )
                 feedViewModel.insert(feed)
                 feeds.sortBy { it.key }

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -27,6 +28,8 @@ class MessageActivity(): AppCompatActivity(){
         val tag = "MESSAGE_ACTIVITY_VIEW"
         val feedkeyTag = "UNIBAS_SDATA_FEEDKEY"
         val feedPosTag = "UNIBAS_SDATA_FEEDPOS"
+        val feedTypeTag = "UNIBAS_SDATA_FEEDTYPE"
+        val feedOwnerTag = "UNIBAS_SDATA_FEEDOWNER"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,8 +40,14 @@ class MessageActivity(): AppCompatActivity(){
         val selfView = EventBus.getDefault().getStickyEvent(SelfViewModel::class.java)
         var msgview: ListView = findViewById(R.id.messages)
         msgview.isClickable = false
+        var type = intent.getStringExtra(feedTypeTag)
+        var owner = intent.getBooleanExtra(feedOwnerTag, false)
         var msgPublish: EditText = findViewById(R.id.publishText)
         var publishBtn: Button = findViewById(R.id.publishButton)
+        if (type != "Pub" && !owner){
+            msgPublish.visibility = View.INVISIBLE
+            publishBtn.visibility = View.INVISIBLE
+        }
         if (messageView.getFullFeed(feedkey) != null){
             message = messageView.getFullFeed(feedkey)
 

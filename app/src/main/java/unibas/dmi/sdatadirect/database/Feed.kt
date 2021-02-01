@@ -41,5 +41,8 @@ data class Feed (
      * the last time a message in this feed was received
      */
     @ColumnInfo(name = "last_received_message")
-    var last_received_message: Long = 0L
+    var last_received_message: Long = 0L,
+
+    @ColumnInfo(name = "owner")
+    var owner: Boolean = false
 )
