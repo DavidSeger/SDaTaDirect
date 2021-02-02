@@ -13,7 +13,7 @@ class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
          peerInfoDao.unsubscribePeer(wifiAddress, feed_key)
      }
 
-      suspend fun insert(vararg: PeerInfo){
+     fun insert(vararg: PeerInfo){
          peerInfoDao.insert(vararg)
      }
 

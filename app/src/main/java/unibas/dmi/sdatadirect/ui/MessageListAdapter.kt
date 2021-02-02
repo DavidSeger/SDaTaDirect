@@ -32,9 +32,9 @@ class MessageListAdapter(context: Context, val resource: Int, val messages: Arra
         // Get view for row item
         val rowView = layoutInflater.inflate(R.layout.device_adapter_view, parent, false)
         val msg = rowView.findViewById<TextView>(R.id.deviceName)
-        val publishTime = rowView.findViewById<TextView>(R.id.deviceAddress)
+        val info = rowView.findViewById<TextView>(R.id.deviceAddress)
         msg.text = messages[position].content!!.toString(Charsets.UTF_8)
-        publishTime.text = Date(Timestamp(messages[position].timestamp!!).time).toString()
+        info.text = "published by " + messages[position].publisher + " on " + Date(Timestamp(messages[position].timestamp!!).time).toString()
         return rowView
     }
 

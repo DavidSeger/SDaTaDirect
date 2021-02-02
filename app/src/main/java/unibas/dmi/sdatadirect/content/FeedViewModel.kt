@@ -22,7 +22,7 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Launching a new coroutine to insert the data in a non-blocking way
      */
-    fun insert(feed: Feed) =viewModelScope.launch(Dispatchers.IO) {
+    fun insert(feed: Feed){
         repository.insert(feed)
     }
 

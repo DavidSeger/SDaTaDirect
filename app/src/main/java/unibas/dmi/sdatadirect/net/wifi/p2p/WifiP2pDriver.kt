@@ -132,6 +132,7 @@ class WifiP2pDriver (
                 //...
                 activity.textView.text = "Discovery Starting failed"
                 Log.d(TAG, "Discovery starting failed")
+                Log.d(TAG, "error code: $reasonCode")
             }
         })
 

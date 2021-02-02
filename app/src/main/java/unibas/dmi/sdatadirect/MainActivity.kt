@@ -208,7 +208,7 @@ class MainActivity : AppCompatActivity() {
         if(selfViewModel.getSelf() == null){
             var kPair = cryptoHandler.keyPairRSAGenerator()
             val self = Self(
-                name = "self",
+                name = Settings.Secure.getString(contentResolver, "bluetooth_name"),
                 privKey = cryptoHandler.getPrivateKeyEncoded(kPair.private),
                 pubKey = cryptoHandler.getPublicKeyEncoded(kPair.public)
             )
@@ -217,7 +217,7 @@ class MainActivity : AppCompatActivity() {
 
         if(feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!) == null){
             var selfFeed = Feed(
-                key = Settings.Secure.getString(contentResolver, "bluetooth_name"),
+                key = selfViewModel.getSelf().name + " private Feed",
                 type = "priv",
                 host = "UNIBAS.SDATA.TEST",
                 port = "8888",
@@ -331,75 +331,89 @@ class MainActivity : AppCompatActivity() {
                         val linearLayout = dialog.findViewById<LinearLayout>(R.id.linearLayout)
                         val saveBtn: Button = dialog.findViewById(R.id.saveBtn)
                         val cancelBtn: Button = dialog.findViewById(R.id.button3)
-                        val newPeer = Peer(
-                            name = device.name,
-                            bluetooth_mac_address = device.address,
-                            wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
-                            shared_key = qrCode.scannedContent?.split("#")?.get(1),
-                            public_key = selfViewModel.getSelf().pubKey,                                               //cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
-                            private_key = selfViewModel.getSelf().privKey,                                                           //cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
-                            foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
-                        )
-
-                        val name= TextView(dialog.context)
-                        val bluetoothAddress = TextView(dialog.context)
-                        val wifiAddress = TextView(dialog.context)
-
-                        name.text = "Devince name: ${newPeer.name}"
-                        bluetoothAddress.text = "Bluetooth: ${newPeer.bluetooth_mac_address}"
-                        wifiAddress.text = "WiFi: ${newPeer.wifi_mac_address}"
-
-                        name.textSize = 18f
-                        bluetoothAddress.textSize = 18f
-                        wifiAddress.textSize = 18f
-
-                        linearLayout.addView(name)
-                        linearLayout.addView(bluetoothAddress)
-                        linearLayout.addView(wifiAddress)
-
-
-                        saveBtn.setOnClickListener {
-                            if (newPeer.wifi_mac_address == null || newPeer.shared_key == null || newPeer.public_key == null) {
-                                Toast.makeText(
-                                    dialog.context,
-                                    "You have to scan the QRCode first!",
-                                    Toast.LENGTH_SHORT
-                                )
-                                saved = false
-                                dialog.cancel()
-                            } else {
-                                peerViewModel.insert(newPeer)
-                                saved = true
-
-                                bluetoothDriver.connect(bluetoothDriver.devices[i])
-                                val message: Message = Message.obtain()
-                                message.what = STATE_CONNECTING
-                                handler.sendMessage(message)
-
-                                dialog.cancel()
-                            }
-                        }
-
-                        cancelBtn.setOnClickListener {
-                            saved = false
-
-                            val builder = AlertDialog.Builder(this@MainActivity)
-                            builder.setTitle("Refused peer to save")
-                            builder.setMessage(
-                                "Are you sure to not save the device? Otherwise, the connection will be " +
-                                        "aborted"
+                        var pubKey = qrCode.scannedContent?.split("#")?.get(2)
+                        var newPeer: Peer? = null
+                        if (peerViewModel.getByPublicKey(pubKey!!) == null) {
+                            newPeer = Peer(
+                                name = device.name,
+                                bluetooth_mac_address = device.address,
+                                wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
+                                shared_key = qrCode.scannedContent?.split("#")?.get(1),
+                                public_key = selfViewModel.getSelf().pubKey,                                               //cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                                private_key = selfViewModel.getSelf().privKey,                                                           //cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
+                                foreign_public_key = pubKey
                             )
-                            builder.setPositiveButton("YES") { dialog, which ->
-                                finish()
-                            }
+                        } else {
+                                newPeer = peerViewModel.getByPublicKey(pubKey!!)
+                                newPeer!!.name = device.name
+                                newPeer.bluetooth_mac_address = device.address
+                                newPeer.wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0)
+                                newPeer.shared_key = qrCode.scannedContent?.split("#")?.get(1)
+                                newPeer.public_key = selfViewModel.getSelf().pubKey                                        //cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                                newPeer.private_key = selfViewModel.getSelf().privKey                                                          //cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
 
-                            val alertDialog: AlertDialog = builder.create()
-                            alertDialog.show()
-
-                            dialog.cancel()
                         }
 
-                        dialog.show()
+                            val name = TextView(dialog.context)
+                            val bluetoothAddress = TextView(dialog.context)
+                            val wifiAddress = TextView(dialog.context)
+
+                            name.text = "Devince name: ${newPeer.name}"
+                            bluetoothAddress.text = "Bluetooth: ${newPeer.bluetooth_mac_address}"
+                            wifiAddress.text = "WiFi: ${newPeer.wifi_mac_address}"
+
+                            name.textSize = 18f
+                            bluetoothAddress.textSize = 18f
+                            wifiAddress.textSize = 18f
+
+                            linearLayout.addView(name)
+                            linearLayout.addView(bluetoothAddress)
+                            linearLayout.addView(wifiAddress)
+
+
+                            saveBtn.setOnClickListener {
+                                if (newPeer.wifi_mac_address == null || newPeer.shared_key == null || newPeer.public_key == null) {
+                                    Toast.makeText(
+                                        dialog.context,
+                                        "You have to scan the QRCode first!",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                    saved = false
+                                    dialog.cancel()
+                                } else {
+                                    peerViewModel.insert(newPeer)
+                                    saved = true
+
+                                    bluetoothDriver.connect(bluetoothDriver.devices[i])
+                                    val message: Message = Message.obtain()
+                                    message.what = STATE_CONNECTING
+                                    handler.sendMessage(message)
+
+                                    dialog.cancel()
+                                }
+                            }
+
+                            cancelBtn.setOnClickListener {
+                                saved = false
+
+                                val builder = AlertDialog.Builder(this@MainActivity)
+                                builder.setTitle("Refused peer to save")
+                                builder.setMessage(
+                                    "Are you sure to not save the device? Otherwise, the connection will be " +
+                                            "aborted"
+                                )
+                                builder.setPositiveButton("YES") { dialog, which ->
+                                    finish()
+                                }
+
+                                val alertDialog: AlertDialog = builder.create()
+                                alertDialog.show()
+
+                                dialog.cancel()
+                            }
+
+                            dialog.show()
+
                     }
 
                 } else {

@@ -12,6 +12,7 @@ import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.database.Feed
+import unibas.dmi.sdatadirect.database.Message
 import unibas.dmi.sdatadirect.ui.FeedListAdapter
 
 
@@ -43,7 +44,7 @@ class Feed_overview_activity : AppCompatActivity() {
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
             var f = adapter.getItem(i)!!
             if(f.subscribed!!) {
-                var owner = f.owner == selfViewModel.getSelf().pubKey
+                var canPublish = f.owner == selfViewModel.getSelf().pubKey && f.type == "priv"
                 val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
                     EventBus.getDefault()
                         .postSticky(
@@ -55,7 +56,7 @@ class Feed_overview_activity : AppCompatActivity() {
                         .postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
                     putExtra(MessageActivity.feedkeyTag, f.key)
                     putExtra(MessageActivity.feedPosTag, i)
-                    putExtra(MessageActivity.feedOwnerTag, owner)
+                    putExtra(MessageActivity.canPublishTag, canPublish)
                     putExtra(MessageActivity.feedTypeTag, f.type)
                     putExtra(MessageActivity.feedSizeTag, messages.getFullFeed(f.key).size)
                 }
@@ -103,9 +104,19 @@ class Feed_overview_activity : AppCompatActivity() {
                 /**
                  * replicate own messages to put into pub
                  */
+                var msgCounter = 0
                 for (m in msgs){
-                    m.feed_key = feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!).key
-                    messages.insert(m)
+                    msgCounter++
+                    var copyMessage = Message(
+                        message_id = 0,
+                        sequence_Nr = msgCounter.toLong(),
+                        signature = m.signature,
+                        feed_key = feed.key,
+                        content = m.content,
+                        timestamp = m.timestamp,
+                        publisher = m.publisher
+                    )
+                    messages.insert(copyMessage)
                 }
                 feeds.sortBy { it.key }
                 listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)

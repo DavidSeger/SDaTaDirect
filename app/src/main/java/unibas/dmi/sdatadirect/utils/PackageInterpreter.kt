@@ -39,12 +39,14 @@ class PackageInterpreter(
             var host = node.get("host").asText()
             var port = node.get("port").asText()
             var type = node.get("type").asText()
+            var owner = node.get("owner").asText()
             SetSynchronization.receiveFeedInquiryAnswer(
                 Feed(
                     key = feedKey,
                     type = type,
                     host = host,
                     port = port,
+                    owner = owner,
                     subscribed = false
             ), subscribed, sender
             )

@@ -57,4 +57,8 @@ class PeerRepository(private val peerDao: PeerDao) {
         peerDao.setLastSync(public_key, lastSync)
     }
 
+    fun getByPublicKey(public_key: String): Peer?{
+        return peerDao.findByPublicKey(public_key)
+    }
+
 }

@@ -35,7 +35,10 @@ data class Message(
     var content: ByteArray? = null,
 
     @ColumnInfo(name = "timestamp")
-    var timestamp: Long? = null
+    var timestamp: Long? = null,
+
+    @ColumnInfo(name = "publisher")
+    val publisher: String
 
 
 )

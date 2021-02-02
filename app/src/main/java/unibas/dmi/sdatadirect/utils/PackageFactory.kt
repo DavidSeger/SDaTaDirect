@@ -42,7 +42,8 @@ class PackageFactory {
 
             val json = "{\"method\" : \"$method\"," +
                     "\"feedKey\" : \"${f.key}\", \"type\" : \"${f.type}\", \"host\" : " +
-                    "\"${f.host}\", \"port\" : \"${f.port}\", \"subscribed\" : \"${f.subscribed}\"}"
+                    "\"${f.host}\", \"port\" : \"${f.port}\", \"subscribed\" : \"${f.subscribed}\"," +
+                    "\"owner\" : \"${f.owner}\"}"
             return encode(json)
         }
 

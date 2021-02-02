@@ -11,7 +11,7 @@ import java.sql.Timestamp
 @Dao
 interface FeedDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(vararg: Feed)
+    fun insert(vararg: Feed)
 
     @Query("UPDATE feed SET subscribed = 1 WHERE `key` = :feed_key")
     fun subscribe(feed_key: String)
@@ -34,7 +34,7 @@ interface FeedDao {
     @Query("UPDATE feed SET last_change = :l WHERE `key` = :feed_key")
     fun updateLastChange(feed_key: String, l: Long)
 
-    @Query("SELECT feed.* FROM feed, peer_info WHERE isSubscribed = 'true' AND peer_info.peer_id = (SELECT peer_id FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND last_received_message >= :lastSync AND feed_key = `key`")
+    @Query("SELECT feed.* FROM feed, peer_info WHERE isSubscribed AND peer_info.peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND last_received_message >= :lastSync AND feed_key = `key`")
     fun getPeerSubscribedFeedsWithChanges(wifiAddress: String, lastSync: Long): Array<Feed>
 
     @Query("UPDATE feed SET last_received_message = :timestamp WHERE `key` = :feedKey")

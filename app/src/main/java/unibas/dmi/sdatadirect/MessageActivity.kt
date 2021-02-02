@@ -29,7 +29,7 @@ class MessageActivity(): AppCompatActivity(){
         val feedkeyTag = "UNIBAS_SDATA_FEEDKEY"
         val feedPosTag = "UNIBAS_SDATA_FEEDPOS"
         val feedTypeTag = "UNIBAS_SDATA_FEEDTYPE"
-        val feedOwnerTag = "UNIBAS_SDATA_FEEDOWNER"
+        val canPublishTag = "UNIBAS_SDATA_CANPUBLISH"
         val feedSizeTag = "UNIBAS_SDATA_FEEDSIZE"
     }
 
@@ -42,16 +42,15 @@ class MessageActivity(): AppCompatActivity(){
         var msgview: ListView = findViewById(R.id.messages)
         msgview.isClickable = false
         var type = intent.getStringExtra(feedTypeTag)
-        var owner = intent.getBooleanExtra(feedOwnerTag, false)
+        var canPublish = intent.getBooleanExtra(canPublishTag, false)
         var msgPublish: EditText = findViewById(R.id.publishText)
         var publishBtn: Button = findViewById(R.id.publishButton)
-        if (!owner){
+        if (!canPublish){
             msgPublish.visibility = View.INVISIBLE
             publishBtn.visibility = View.INVISIBLE
         }
         if (messageView.getFullFeed(feedkey) != null){
             message = messageView.getFullFeed(feedkey)
-
         }
         var adapter = MessageListAdapter(this, R.id.device_list_view, message)
         msgview.adapter = adapter
@@ -65,7 +64,8 @@ class MessageActivity(): AppCompatActivity(){
                     signature = Base64.getEncoder().encodeToString(crypto.createSignature(msgPublish.text.toString().toByteArray(Charsets.UTF_8), selfView.getSelf().privKey!!)),
                     feed_key = feedkey,
                     content = msgPublish.text.toString().toByteArray(charset = Charsets.UTF_8),
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    publisher = selfView.getSelf().name
                 )
                 msgPublish.text.clear()
                 hideKeyboard(this)

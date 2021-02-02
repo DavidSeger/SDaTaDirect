@@ -16,7 +16,7 @@ import unibas.dmi.sdatadirect.ui.FeedListAdapter
 class FeedRepository(private val feedDao: FeedDao) {
 
 
-    suspend fun insert(vararg: Feed){
+   fun insert(vararg: Feed){
         feedDao.insert(vararg)
         feedDao.updateLastChange(vararg.key, System.currentTimeMillis())
         Feed_overview_activity.feeds.add(vararg)

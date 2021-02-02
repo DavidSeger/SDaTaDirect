@@ -20,7 +20,7 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
     /**
      * Launching a new coroutine to insert the data in a non-blocking way
      */
-    fun insert(peerInfo: PeerInfo) =viewModelScope.launch(Dispatchers.IO) {
+    fun insert(peerInfo: PeerInfo){
         repository.insert(peerInfo)
     }
 

@@ -4,6 +4,7 @@ import android.util.Log
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.database.Feed
+import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerInfo
 import unibas.dmi.sdatadirect.net.wifi.p2p.ConnectionManager
 import unibas.dmi.sdatadirect.peer.PeerViewModel
@@ -22,7 +23,6 @@ class SetSynchronization() {
             //phase 1: the host of the connection (group owner of the p2p group) starts with updating the client
             //about all of the feeds it has newly discovered/subscribed to/unsubscribed from
             sendFeedUpdates(partner)
-            sendEndPhaseOneFlag(partner)
         }
 
 
@@ -50,7 +50,7 @@ class SetSynchronization() {
             if (feeds.isKnown(feedkey)) {
                 if (!peerInfos.exists(peerAddress, feedkey)) {
                     var peerInfo = PeerInfo(
-                        peer_id = peers.getPeerByWiFiAddress(peerAddress)!!.id!!,
+                        peer_key = peers.getPeerByWiFiAddress(peerAddress)!!.foreign_public_key!!,
                         feed_key = feedkey,
                         isSubscribed = subscribed
                     )
@@ -73,6 +73,12 @@ class SetSynchronization() {
 
         fun receiveFeedInquiry(feedkey: String, peerAddress: String) {
             var f = feeds.getFeed(feedkey)
+            peerInfos.insert(
+                PeerInfo(
+                peer_key = peers.getPeerByWiFiAddress(peerAddress)!!.foreign_public_key!!,
+                feed_key = feedkey,
+                    isSubscribed = false
+            ))
             ConnectionManager.sendPackage(peerAddress, PackageFactory.answerFeedInquiry(f))
         }
 
@@ -87,6 +93,7 @@ class SetSynchronization() {
             for (f in myFeeds) {
                 ConnectionManager.sendPackage(receiver, PackageFactory.sendFeedUpdate(f))
             }
+            sendEndPhaseOneFlag(receiver)
         }
 
         fun receiveFeedInquiryAnswer(
@@ -95,9 +102,19 @@ class SetSynchronization() {
             sender: String
         ) {
             feeds.insert(feed)
+            /**
+             * we dont know the owner of this peer, meaning we insert it into our Peer database
+             */
+            if(peers.getByPublicKey(feed.owner!!) == null) {
+                var peer = Peer(
+                    id = 0,
+                    foreign_public_key = feed.owner
+                    )
+                peers.insert(peer)
+            }
             peerInfos.insert(
                 PeerInfo(
-                    peer_id = peers.getPeerByWiFiAddress(sender)!!.id!!,
+                    peer_key = feed.owner!!,
                     feed_key = feed.key,
                     isSubscribed = subscribed
                 )
@@ -112,7 +129,6 @@ class SetSynchronization() {
         fun receiveEndPhaseOne(sender: String) {
             if (!isMaster) {
                 sendFeedUpdates(sender)
-                sendEndPhaseOneFlag(sender)
             } else {
                 //Phase 2: Tell the partner for which feeds he is subscribed to he has received new content since the last
                 //meeting
@@ -133,7 +149,7 @@ class SetSynchronization() {
         //Phase 2 methods
 
         private fun sendFeedsWithNews(partner: String) {
-
+            var peerInfoTable = peerInfos.get(partner)
             var lastSync = peers.getLastSync(peers.getPeerByWiFiAddress(partner)!!.public_key!!)!!
             var feedsWithNews = feeds.getPeerSubscribedFeedsWithChanges(partner, lastSync)
             Log.d(TAG, "no. of feeds: " + feedsWithNews.size)

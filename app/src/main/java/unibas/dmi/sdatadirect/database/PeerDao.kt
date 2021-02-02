@@ -39,7 +39,7 @@ interface PeerDao {
     @Query("UPDATE peer_table SET last_sync = :lastSync WHERE public_key = :public_key")
     fun setLastSync(public_key: String, lastSync: Long)
 
-    @Query("SELECT peer_info.* FROM peer_table, peer_info WHERE public_key = :public_key AND peer_id = id")
+    @Query("SELECT peer_info.* FROM peer_table, peer_info WHERE public_key = :public_key AND peer_key = foreign_public_key")
     fun getPeerSubscriptions(public_key: String): Array<PeerInfo>?
 
     @Query("SELECT id FROM peer_table WHERE public_key = :public_key")
