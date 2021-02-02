@@ -63,14 +63,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/subscribed" />
 
-    <Switch
-        android:id="@+id/type"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="8dp"
-        android:text="Pub?"
-        app:layout_constraintEnd_toStartOf="@+id/subscribed"
-        app:layout_constraintTop_toBottomOf="@+id/port" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -59,8 +59,8 @@ class FeedRepository(private val feedDao: FeedDao) {
         feedDao.updateLastReceivedMessage(timestamp, feedKey)
     }
 
-    fun isOwner(feedKey: String): Boolean{
-        return feedDao.isOwner(feedKey)
+    fun getFeedByOwner(ownerKey: String): Feed{
+        return feedDao.getFeedByOwner(ownerKey)
     }
 
 }

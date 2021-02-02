@@ -94,7 +94,6 @@ class SetSynchronization() {
             subscribed: Boolean,
             sender: String
         ) {
-            feed.owner = false
             feeds.insert(feed)
             peerInfos.insert(
                 PeerInfo(

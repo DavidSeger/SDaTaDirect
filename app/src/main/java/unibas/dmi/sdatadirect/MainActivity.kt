@@ -12,6 +12,7 @@ import android.graphics.Bitmap
 
 import android.net.wifi.p2p.*
 import android.os.*
+import android.provider.Settings
 import android.util.EventLog
 
 import android.util.Log
@@ -46,7 +47,6 @@ import java.net.NetworkInterface
 class MainActivity : AppCompatActivity() {
 
     private val TAG: String = "MainActivity"
-    val CHOOSE_FILE_RESULT_CODE: Int = 20
 
     lateinit var intentFilter: IntentFilter
     lateinit var wifiP2pDriver: WifiP2pDriver
@@ -214,6 +214,18 @@ class MainActivity : AppCompatActivity() {
             )
             selfViewModel.insert(self)
         }
+
+        if(feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!) == null){
+            var selfFeed = Feed(
+                key = Settings.Secure.getString(contentResolver, "bluetooth_name"),
+                type = "priv",
+                host = "UNIBAS.SDATA.TEST",
+                port = "8888",
+                subscribed = true,
+                owner = selfViewModel.getSelf().pubKey
+            )
+            feedViewModel.insert(selfFeed)
+        }
         qrCode = QRCode(this)
 
         bluetoothDriver = BluetoothDriver(this, handler, qrCode, cryptoHandler, peerViewModel)
@@ -222,13 +234,12 @@ class MainActivity : AppCompatActivity() {
         // PHASE 1
         qrCodeBtn.setOnClickListener {
             val keyAES = cryptoHandler.keyAESGenerator()
-            val keyRSA = cryptoHandler.keyPairRSAGenerator()
             cryptoHandler.secretAESKey = keyAES
-            cryptoHandler.publicRSAKey = keyRSA.public
-            cryptoHandler.privateRSAKey = keyRSA.private
+            cryptoHandler.publicRSAKey = cryptoHandler.getPublicKeyDecoded(selfViewModel.getSelf().pubKey!!)
+            cryptoHandler.privateRSAKey = cryptoHandler.getPrivateKeyDecoded(selfViewModel.getSelf().privKey!!)
 
             val encodedKeyAES = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!)
-            val encodedPublicKeyRSA = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!)
+            val encodedPublicKeyRSA = selfViewModel.getSelf().pubKey
 
             var wifiMacAddress: String? = null
             try {
@@ -325,8 +336,8 @@ class MainActivity : AppCompatActivity() {
                             bluetooth_mac_address = device.address,
                             wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
                             shared_key = qrCode.scannedContent?.split("#")?.get(1),
-                            public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
-                            private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
+                            public_key = selfViewModel.getSelf().pubKey,                                               //cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                            private_key = selfViewModel.getSelf().privKey,                                                           //cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
                             foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
                         )
 

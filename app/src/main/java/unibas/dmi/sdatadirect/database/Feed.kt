@@ -44,5 +44,5 @@ data class Feed (
     var last_received_message: Long = 0L,
 
     @ColumnInfo(name = "owner")
-    var owner: Boolean = false
+    var owner: String? = null
 )

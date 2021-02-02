@@ -7,12 +7,12 @@
     tools:context=".feed_overview_activity">
 
     <Button
-        android:id="@+id/addFeed"
+        android:id="@+id/addPub"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:text="add Feed"
+        android:text="add Pub"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

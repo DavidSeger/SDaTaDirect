@@ -30,6 +30,7 @@ class MessageActivity(): AppCompatActivity(){
         val feedPosTag = "UNIBAS_SDATA_FEEDPOS"
         val feedTypeTag = "UNIBAS_SDATA_FEEDTYPE"
         val feedOwnerTag = "UNIBAS_SDATA_FEEDOWNER"
+        val feedSizeTag = "UNIBAS_SDATA_FEEDSIZE"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +45,7 @@ class MessageActivity(): AppCompatActivity(){
         var owner = intent.getBooleanExtra(feedOwnerTag, false)
         var msgPublish: EditText = findViewById(R.id.publishText)
         var publishBtn: Button = findViewById(R.id.publishButton)
-        if (type != "Pub" && !owner){
+        if (!owner){
             msgPublish.visibility = View.INVISIBLE
             publishBtn.visibility = View.INVISIBLE
         }
@@ -60,6 +61,7 @@ class MessageActivity(): AppCompatActivity(){
                 var crypto = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
                 var testMessage = Message(
                     message_id = 0,
+                    sequence_Nr = intent.getLongExtra(feedSizeTag, -1L) + 1,
                     signature = Base64.getEncoder().encodeToString(crypto.createSignature(msgPublish.text.toString().toByteArray(Charsets.UTF_8), selfView.getSelf().privKey!!)),
                     feed_key = feedkey,
                     content = msgPublish.text.toString().toByteArray(charset = Charsets.UTF_8),
@@ -70,6 +72,7 @@ class MessageActivity(): AppCompatActivity(){
 
                 messageView.insert(testMessage)
                 message.add(testMessage)
+                message.sortBy { it.sequence_Nr }
                 adapter.notifyDataSetChanged()
             }
         }

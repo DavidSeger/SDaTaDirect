@@ -20,10 +20,8 @@ class SelfViewModel(application: Application): AndroidViewModel(application) {
         repository = SelfRepository(selfDao)
     }
 
-    /**
-     * Launching a new coroutine to insert the data in a non-blocking way
-     */
-    fun insert(self: Self) =viewModelScope.launch(Dispatchers.IO) {
+
+    fun insert(self: Self){
         repository.insert(self)
     }
     fun getSelf():Self{

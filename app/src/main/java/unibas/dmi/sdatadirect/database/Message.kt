@@ -22,6 +22,9 @@ data class Message(
     @PrimaryKey(autoGenerate = true)
     val message_id: Long,
 
+    @ColumnInfo(name = "sequenceNumber")
+    var sequence_Nr: Long,
+
     @ColumnInfo(name = "signature")
     var signature: String? = null,
 

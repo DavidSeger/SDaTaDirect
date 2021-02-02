@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 
 /**
- * Intefaces defines functions for queries in order to retrieve peer data from the database
+ * Intefaces defines functions for queries in order to retrieve message data from the database
  */
 
 @Dao

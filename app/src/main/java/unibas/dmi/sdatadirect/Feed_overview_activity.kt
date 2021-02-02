@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_feed_overview_activity.*
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
@@ -30,9 +29,11 @@ class Feed_overview_activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_feed_overview_activity)
-        addButton = findViewById(R.id.addFeed)
+        addButton = findViewById(R.id.addPub)
         feedViewModel = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
         listView = findViewById(R.id.feedView)
+        var messages = EventBus.getDefault().getStickyEvent(MessageViewModel::class.java)
+        var selfViewModel = EventBus.getDefault().getStickyEvent(SelfViewModel::class.java)
         if (feedViewModel.getAllFeeds() != null) {
             feeds = feedViewModel.getAllFeeds().toCollection(ArrayList())
             feeds.sortBy { it.key }
@@ -42,10 +43,11 @@ class Feed_overview_activity : AppCompatActivity() {
         listView.setOnItemClickListener { adapterView: AdapterView<*>, view1: View, i: Int, l: Long ->
             var f = adapter.getItem(i)!!
             if(f.subscribed!!) {
+                var owner = f.owner == selfViewModel.getSelf().pubKey
                 val viewMessagesIntent = Intent(this, MessageActivity::class.java).apply {
                     EventBus.getDefault()
                         .postSticky(
-                            EventBus.getDefault().getStickyEvent(MessageViewModel::class.java)
+                            messages
                         )
                     EventBus.getDefault()
                         .postSticky(EventBus.getDefault().getStickyEvent(FeedViewModel::class.java))
@@ -53,8 +55,9 @@ class Feed_overview_activity : AppCompatActivity() {
                         .postSticky(EventBus.getDefault().getStickyEvent(SelfViewModel::class.java))
                     putExtra(MessageActivity.feedkeyTag, f.key)
                     putExtra(MessageActivity.feedPosTag, i)
-                    putExtra(MessageActivity.feedOwnerTag, f.owner)
+                    putExtra(MessageActivity.feedOwnerTag, owner)
                     putExtra(MessageActivity.feedTypeTag, f.type)
+                    putExtra(MessageActivity.feedSizeTag, messages.getFullFeed(f.key).size)
                 }
                 startActivityForResult(viewMessagesIntent, 1)
             } else{
@@ -82,7 +85,6 @@ class Feed_overview_activity : AppCompatActivity() {
             // val linearLayout = addDialog.findViewById<LinearLayout>(R.id.linearLayout)
             val saveBtn: Button = addDialog.findViewById(R.id.saveFeedButton)
             val nameField: EditText = addDialog.findViewById(R.id.name)
-            val type: Switch = addDialog.findViewById(R.id.type)
             val hostField: EditText = addDialog.findViewById(R.id.host)
             val portField: EditText = addDialog.findViewById(R.id.port)
             val subscribedSwitch: Switch = addDialog.findViewById(R.id.subscribed)
@@ -90,13 +92,21 @@ class Feed_overview_activity : AppCompatActivity() {
             saveBtn.setOnClickListener {
                 var feed = Feed(
                     key = nameField.text.toString(),
-                    type = if(type.isChecked) "Pub" else "Private",
+                    type = "pub",
                     host = hostField.text.toString(),
                     port = portField.text.toString(),
                     subscribed = subscribedSwitch.isChecked,
-                    owner = true
+                    owner = selfViewModel.getSelf().pubKey
                 )
                 feedViewModel.insert(feed)
+                var msgs = messages.getFullFeed(feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!).key)
+                /**
+                 * replicate own messages to put into pub
+                 */
+                for (m in msgs){
+                    m.feed_key = feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!).key
+                    messages.insert(m)
+                }
                 feeds.sortBy { it.key }
                 listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
                 addDialog.cancel()

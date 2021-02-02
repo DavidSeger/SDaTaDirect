@@ -15,7 +15,7 @@ import unibas.dmi.sdatadirect.ui.FeedListAdapter
 class SelfRepository(private val selfDao: SelfDao) {
 
 
-    suspend fun insert(vararg: Self){
+    fun insert(vararg: Self){
             selfDao.insert(vararg)
     }
 

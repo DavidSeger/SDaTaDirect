@@ -12,5 +12,5 @@ interface SelfDao {
     fun getSelf(): Self
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(vararg: Self)
+    fun insert(vararg: Self)
 }
