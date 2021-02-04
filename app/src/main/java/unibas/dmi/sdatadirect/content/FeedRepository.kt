@@ -50,13 +50,11 @@ class FeedRepository(private val feedDao: FeedDao) {
         return feedDao.getAllChangedSinceTimestamp(lastSync)
     }
 
-    fun getPeerSubscribedFeedsWithChanges(wifiAddress: String, lastSync: Long): Array<Feed>{
-        return feedDao.getPeerSubscribedFeedsWithChanges(wifiAddress, lastSync)
-    }
 
 
-    fun updateLastReceivedMessage(timestamp: Long, feedKey: String){
-        feedDao.updateLastReceivedMessage(timestamp, feedKey)
+
+    fun updateLastReceivedMessage(seqNr: Long, feedKey: String){
+        feedDao.updateLastReceivedMessage(seqNr, feedKey)
     }
 
     fun getFeedByOwner(ownerKey: String): Feed{

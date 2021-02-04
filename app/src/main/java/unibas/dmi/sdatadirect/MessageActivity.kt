@@ -60,7 +60,7 @@ class MessageActivity(): AppCompatActivity(){
                 var crypto = EventBus.getDefault().getStickyEvent(CryptoHandler::class.java)
                 var testMessage = Message(
                     message_id = 0,
-                    sequence_Nr = intent.getLongExtra(feedSizeTag, -1L) + 1,
+                    sequence_Nr = messageView.getNewestMessage(feedkey) + 1,
                     signature = Base64.getEncoder().encodeToString(crypto.createSignature(msgPublish.text.toString().toByteArray(Charsets.UTF_8), selfView.getSelf().privKey!!)),
                     feed_key = feedkey,
                     content = msgPublish.text.toString().toByteArray(charset = Charsets.UTF_8),

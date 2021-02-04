@@ -25,7 +25,7 @@ class MessageViewModel(application: Application): AndroidViewModel(application) 
      */
     fun insert(message: Message) =viewModelScope.launch(Dispatchers.IO) {
         repository.insert(message)
-        feeds.updateLastReceivedMessage(System.currentTimeMillis(), message.feed_key!!)
+        feeds.updateLastReceivedMessage(message.sequence_Nr, message.feed_key!!)
     }
 
     fun getFullFeed(feed_key: String): ArrayList<Message>{
@@ -33,8 +33,8 @@ class MessageViewModel(application: Application): AndroidViewModel(application) 
     }
 
 
-    fun getNewMessages(feed_key: String, timestamp: Long): Array<Message>{
-        return repository.getNewMessages(feed_key, timestamp)
+    fun getNewMessages(feed_key: String, sequenceNumber: Long): Array<Message>{
+        return repository.getNewMessages(feed_key, sequenceNumber)
     }
 
     fun getAllBySignature(feed_key: String, signature: String): Array<Message>{

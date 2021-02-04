@@ -16,12 +16,12 @@ interface MessageDao {
     @Query("SELECT * FROM message WHERE feed_key = :feed_key ORDER BY timestamp DESC")
     fun getFullFeed(feed_key: String): Array<Message>
 
-    @Query("SELECT * FROM message WHERE feed_key = :feed_key AND timestamp > :timestamp ORDER BY timestamp DESC")
-    fun getNewMessages(feed_key: String, timestamp: Long): Array<Message>
+    @Query("SELECT * FROM message WHERE feed_key = :feed_key AND sequenceNumber > :sequenceNumber ORDER BY sequenceNumber ASC")
+    fun getNewMessages(feed_key: String, sequenceNumber: Long): Array<Message>
 
-    @Query("SELECT * FROM message WHERE feed_key = :feed_key AND signature = :signature ORDER BY timestamp DESC")
+    @Query("SELECT * FROM message WHERE feed_key = :feed_key AND signature = :signature ORDER BY sequenceNumber ASC")
     fun getAllBySignature(feed_key: String, signature: String): Array<Message>
 
-    @Query("SELECT MAX(timestamp) FROM message WHERE feed_key = :feed_key")
+    @Query("SELECT MAX(sequenceNumber) FROM message WHERE feed_key = :feed_key GROUP BY feed_key")
     fun getNewestMessage(feed_key: String): Long
 }

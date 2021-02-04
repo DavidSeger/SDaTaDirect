@@ -5,6 +5,7 @@ import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.MainActivity
 import unibas.dmi.sdatadirect.database.Feed
+import unibas.dmi.sdatadirect.database.Message
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.SetSynchronization
 import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.PackageFactory.*
@@ -58,12 +59,39 @@ class PackageInterpreter(
             var lastSync = node.get("lastSync").asLong()
             SetSynchronization.receiveLastSync(sender, lastSync)
         }
-        if (method == METHOD.SEND_FEED_WITH_NEWS.name){
-            var feedKey = node.get("feedKey").asText()
-            SetSynchronization.receiveFeedWithNews(sender, feedKey)
-        }
         if (method == METHOD.END_PHASE_TWO.name){
             SetSynchronization.receiveEndPhaseTwo(sender)
+        }
+        if (method == METHOD.SEND_LAST_SEQ_NR.name){
+            var feedKey = node.get("feedKey").asText()
+            var lastSeq = node.get("lastSeq").asLong()
+            SetSynchronization.receiveFeedUpdateList(sender, feedKey, lastSeq)
+        }
+        if (method == METHOD.SEND_RANGE_MESSAGE_REQUEST.name){
+            var feedKey = node.get("feedKey").asText()
+            var lowerLimit = node.get("lowerLimit").asLong()
+            SetSynchronization.receiveRangeMessageRequest(sender, feedKey, lowerLimit)
+        }
+        if (method == METHOD.SEND_MESSAGE.name){
+            var feedKey = node.get("feedKey").asText()
+            var sequenceNr = node.get("sequenceNr").asLong()
+            var content = node.get("content").asText().toByteArray(Charsets.UTF_8)
+            var publisher = node.get("publisher").asText()
+            var signature = node.get("signature").asText()
+            var timestamp = node.get("timestamp").asLong()
+            var receivedMessage = Message(
+                message_id = 0,
+                sequence_Nr = sequenceNr,
+                feed_key = feedKey,
+                content = content,
+                publisher = publisher,
+                signature = signature,
+                timestamp = timestamp
+            )
+            SetSynchronization.receiveMessage(receivedMessage)
+        }
+        if (method == METHOD.END_PHASE_THREE.name){
+            SetSynchronization.receiveEndPhaseThree(sender)
         }
 
     }

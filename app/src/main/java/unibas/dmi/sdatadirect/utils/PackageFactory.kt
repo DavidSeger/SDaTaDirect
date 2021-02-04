@@ -2,6 +2,7 @@ package unibas.dmi.sdatadirect.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.database.Feed
+import unibas.dmi.sdatadirect.database.Message
 
 /**
  * packages are Json objects containing a header signifying a method
@@ -15,8 +16,11 @@ class PackageFactory {
         ANSWER_FEED_QUERY,
         END_PHASE_ONE,
         SEND_LAST_SYNC,
-        SEND_FEED_WITH_NEWS,
-        END_PHASE_TWO
+        SEND_LAST_SEQ_NR,
+        END_PHASE_TWO,
+        SEND_RANGE_MESSAGE_REQUEST,
+        SEND_MESSAGE,
+        END_PHASE_THREE
     }
 
     companion object {
@@ -60,12 +64,6 @@ class PackageFactory {
             return encode(json)
         }
 
-        fun sendFeedsWithNews(f: Feed): ByteArray {
-            var method = METHOD.SEND_FEED_WITH_NEWS
-            val json = "{\"method\" : \"$method\", \"feedKey\" : \"${f.key}\"}"
-            return encode(json)
-
-        }
 
         fun endPhaseTwo(): ByteArray {
             var method = METHOD.END_PHASE_TWO
@@ -74,13 +72,38 @@ class PackageFactory {
             return encode(json)
         }
 
+        fun sendSeqNr(feedKey: String, fLastSeq: Long): ByteArray {
+            var method = METHOD.SEND_LAST_SEQ_NR
+            val json = "{\"method\" : \"$method\", \"feedKey\" : \"$feedKey\", \"lastSeq\" : \"$fLastSeq\"}"
+            return encode(json)
+        }
+
+        fun sendMessageRangeRequest(feedKey: String, lastReceivedSeqFeed: Long): ByteArray {
+            var method = METHOD.SEND_RANGE_MESSAGE_REQUEST
+            val json = "{\"method\" : \"$method\", \"feedKey\" : \"$feedKey\", \"lowerLimit\" : \"$lastReceivedSeqFeed\"}"
+            return encode(json)
+        }
+
+        fun sendMessage(m: Message): ByteArray {
+            var method = METHOD.SEND_MESSAGE
+            val json = "{\"method\" : \"$method\", \"sequenceNr\" : \"${m.sequence_Nr}\", \"feedKey\" : \"${m.feed_key}\", " +
+                    "\"content\" : \"${m.content!!.toString(Charsets.UTF_8)}\", \"publisher\" : \"${m.publisher}\", \"signature\" : \"${m.signature}\", " +
+                    "\"timestamp\" : \"${m.timestamp}\"}"
+            return encode(json)
+        }
+        fun endPhaseThree(): ByteArray {
+            var method = METHOD.END_PHASE_THREE
+            val json = "{\"method\" : \"$method\"}"
+            return encode(json)
+        }
+
+
         private fun encode(json: String): ByteArray{
             val objectMapper = ObjectMapper()
             val node = objectMapper.readTree(json)
             val encodedNode = objectMapper.writeValueAsBytes(node)
             return encodedNode
         }
-
 
 
     }

@@ -51,13 +51,9 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
         return repository.getAllChangedSinceTimestamp(lastSync)
     }
 
-    fun getPeerSubscribedFeedsWithChanges(wifiAddress: String, lastSync: Long): Array<Feed>{
-        return repository.getPeerSubscribedFeedsWithChanges(wifiAddress, lastSync)
-    }
 
-
-    fun updateLastReceivedMessage(timestamp: Long, feedKey: String){
-        repository.updateLastReceivedMessage(timestamp, feedKey)
+    fun updateLastReceivedMessage(seqNr: Long, feedKey: String){
+        repository.updateLastReceivedMessage(seqNr, feedKey)
     }
 
     fun getFeedByOwner(ownerKey: String): Feed{

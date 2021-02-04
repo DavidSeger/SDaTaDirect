@@ -2,8 +2,10 @@ package unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils
 
 import android.util.Log
 import unibas.dmi.sdatadirect.content.FeedViewModel
+import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.database.Feed
+import unibas.dmi.sdatadirect.database.Message
 import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerInfo
 import unibas.dmi.sdatadirect.net.wifi.p2p.ConnectionManager
@@ -29,15 +31,18 @@ class SetSynchronization() {
         private lateinit var peers: PeerViewModel
         private lateinit var peerInfos: PeerInfoViewModel
         private lateinit var feeds: FeedViewModel
+        private lateinit var messages: MessageViewModel
 
         fun setup(
             peerViewModel: PeerViewModel,
             peerInfoViewModel: PeerInfoViewModel,
-            feedViewModel: FeedViewModel
+            feedViewModel: FeedViewModel,
+            messageViewModel: MessageViewModel
         ) {
             peers = peerViewModel
             peerInfos = peerInfoViewModel
             feeds = feedViewModel
+            messages = messageViewModel
         }
         //phase 1 methods
 
@@ -116,7 +121,8 @@ class SetSynchronization() {
                 PeerInfo(
                     peer_key = feed.owner!!,
                     feed_key = feed.key,
-                    isSubscribed = subscribed
+                    isSubscribed = subscribed,
+                    lastSentMessage = 0L
                 )
             )
 
@@ -136,43 +142,31 @@ class SetSynchronization() {
             }
         }
 
-        /**
-         * used to synchronize the "last sync" variable across both partners
-         */
-        private fun sendLastSync(receiver: String) {
-            var lastSync = System.currentTimeMillis()
-            peers.setLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!, lastSync)
-            ConnectionManager.sendPackage(receiver, PackageFactory.sendLastSync(lastSync))
-        }
 
 
         //Phase 2 methods
 
         private fun sendFeedsWithNews(partner: String) {
-            var peerInfoTable = peerInfos.get(partner)
-            var lastSync = peers.getLastSync(peers.getPeerByWiFiAddress(partner)!!.public_key!!)!!
-            var feedsWithNews = feeds.getPeerSubscribedFeedsWithChanges(partner, lastSync)
-            Log.d(TAG, "no. of feeds: " + feedsWithNews.size)
-            for (f in feedsWithNews) {
-                ConnectionManager.sendPackage(
-                    partner,
-                    PackageFactory.sendFeedsWithNews(f)
-                )
+            var peer = peerInfos.getAllSubscribed(partner)
+            for (f in peer) {
+                var fLastSeq = messages.getNewestMessage(f.feed_key)
+                if(f.lastSentMessage < fLastSeq) {
+                    ConnectionManager.sendPackage(
+                        partner,
+                        PackageFactory.sendSeqNr(f.feed_key, fLastSeq)
+                    )
+                }
             }
             sendEndPhaseTwoFlag(partner)
         }
 
-        fun receiveFeedWithNews(sender: String, feedKey: String?) {
-            Log.d(
-                TAG,
-                "peer " + peers.getPeerByWiFiAddress(sender)!!.name + " has news in " + feedKey
-            )
+        fun receiveFeedUpdateList(sender: String, feedKey: String?, lastSeq: Long) {
             if (availableFeedsByPeer.containsKey(sender)) {
                 var feedList = availableFeedsByPeer.get(sender)
-                feedList!!.add(feedKey!!)
+                feedList!!.add(feedKey!! + "::" + lastSeq)
             } else {
                 var feedList: ArrayList<String> = ArrayList<String>()
-                feedList.add(feedKey!!)
+                feedList.add(feedKey!! + "::" + lastSeq)
                 availableFeedsByPeer.put(sender, feedList)
             }
         }
@@ -186,6 +180,59 @@ class SetSynchronization() {
                 sendFeedsWithNews(sender)
             } else {
                 //Phase 3:
+                requestFullFeedUpdates(sender)
+            }
+        }
+        //phase 3 methods
+
+        /**
+         * this method is used automatically upon a connection with a peer, it
+         * asks for all news for all private feeds it has subscribed to, and updates all
+         * pubs it is hosting.
+         */
+        private fun requestFullFeedUpdates(sender: String) {
+            var feedsOfPeer = availableFeedsByPeer.get(sender)
+            if (feedsOfPeer != null) {
+                for (f in feedsOfPeer!!) {
+                    var feed = feeds.getFeed(f.split("::")[0])
+                    var mostRecentSeqPeer: Long = f.split("::")[1].toLong()
+                    var lastReceivedSeqFeed: Long = feed.last_received_message_seq
+                    if (lastReceivedSeqFeed < mostRecentSeqPeer) {
+                        if (feed.type == "priv") {
+                            ConnectionManager.sendPackage(
+                                sender,
+                                PackageFactory.sendMessageRangeRequest(
+                                    feed.key,
+                                    lastReceivedSeqFeed
+                                )
+                            )
+                        }
+                        //TODO:: pub case
+                    }
+                }
+            }
+            sendEndPhaseThreeFlag(sender)
+        }
+
+        private fun sendEndPhaseThreeFlag(sender: String) {
+            ConnectionManager.sendPackage(sender, PackageFactory.endPhaseThree())
+        }
+
+        fun receiveRangeMessageRequest(sender: String, feedKey: String?, lowerLimit: Long) {
+            var msgs = messages.getNewMessages(feedKey!!, lowerLimit)
+            for (m in msgs){
+                ConnectionManager.sendPackage(sender, PackageFactory.sendMessage(m))
+            }
+        }
+
+        fun receiveMessage(receivedMessage: Message) {
+            messages.insert(receivedMessage)
+        }
+
+        fun receiveEndPhaseThree(sender: String) {
+            if (!isMaster){
+                requestFullFeedUpdates(sender)
+            } else {
                 sendLastSync(sender)
             }
         }
@@ -194,6 +241,19 @@ class SetSynchronization() {
         fun receiveLastSync(partner: String, lastSync: Long) {
             peers.setLastSync(peers.getPeerByWiFiAddress(partner)!!.public_key!!, lastSync)
         }
+
+
+        /**
+         * used to synchronize the "last sync" variable across both partners
+         */
+        private fun sendLastSync(receiver: String) {
+            var lastSync = System.currentTimeMillis()
+            peers.setLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!, lastSync)
+            ConnectionManager.sendPackage(receiver, PackageFactory.sendLastSync(lastSync))
+        }
+
+
+
     }
 
 

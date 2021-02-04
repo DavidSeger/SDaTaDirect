@@ -38,10 +38,10 @@ data class Feed (
     var last_change: Long = 0L,
 
     /**
-     * the last time a message in this feed was received
+     * the sequence number of the newest message in the feed
      */
-    @ColumnInfo(name = "last_received_message")
-    var last_received_message: Long = 0L,
+    @ColumnInfo(name = "last_received_message_seq")
+    var last_received_message_seq: Long = 0L,
 
     @ColumnInfo(name = "owner")
     var owner: String? = null

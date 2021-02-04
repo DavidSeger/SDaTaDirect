@@ -18,8 +18,8 @@ class MessageRepository(private val MessageoDao: MessageDao) {
     }
 
 
-    fun getNewMessages(feed_key: String, timestamp: Long): Array<Message>{
-        return MessageoDao.getNewMessages(feed_key, timestamp)
+    fun getNewMessages(feed_key: String, sequenceNumber: Long): Array<Message>{
+        return MessageoDao.getNewMessages(feed_key, sequenceNumber)
     }
 
    fun getAllBySignature(feed_key: String, signature: String): Array<Message>{

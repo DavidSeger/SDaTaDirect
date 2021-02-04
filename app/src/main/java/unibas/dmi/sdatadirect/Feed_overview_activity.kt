@@ -58,7 +58,6 @@ class Feed_overview_activity : AppCompatActivity() {
                     putExtra(MessageActivity.feedPosTag, i)
                     putExtra(MessageActivity.canPublishTag, canPublish)
                     putExtra(MessageActivity.feedTypeTag, f.type)
-                    putExtra(MessageActivity.feedSizeTag, messages.getFullFeed(f.key).size)
                 }
                 startActivityForResult(viewMessagesIntent, 1)
             } else{

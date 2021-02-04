@@ -158,6 +158,7 @@ class MainActivity : AppCompatActivity() {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
 
+
         textView = findViewById(R.id.textView)
         listView = findViewById(R.id.peerView)
         discoverableSwitch = findViewById(R.id.discoverableSwitch)
@@ -193,7 +194,7 @@ class MainActivity : AppCompatActivity() {
 
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
         ConnectionManager.peers = peerViewModel
-        SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel)
+        SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel)
 
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)
@@ -226,6 +227,7 @@ class MainActivity : AppCompatActivity() {
             )
             feedViewModel.insert(selfFeed)
         }
+        var myMessages = messageViewModel.getFullFeed(selfViewModel.getSelf().name + " private Feed")
         qrCode = QRCode(this)
 
         bluetoothDriver = BluetoothDriver(this, handler, qrCode, cryptoHandler, peerViewModel)

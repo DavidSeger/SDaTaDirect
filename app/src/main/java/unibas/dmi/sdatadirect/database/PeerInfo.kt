@@ -25,5 +25,8 @@ data class PeerInfo(
     val feed_key: String,
 
     @ColumnInfo(name = "isSubscribed")
-    var isSubscribed: Boolean = true
+    var isSubscribed: Boolean = true,
+
+    @ColumnInfo(name = "lastSentMessage")
+    var lastSentMessage: Long = 0L
 )
