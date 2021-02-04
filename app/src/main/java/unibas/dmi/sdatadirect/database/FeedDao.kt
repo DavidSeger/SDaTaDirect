@@ -39,4 +39,7 @@ interface FeedDao {
 
     @Query("SELECT * FROM feed WHERE owner = :ownerKey AND type = 'priv'")
     fun getFeedByOwner(ownerKey: String): Feed
+
+    @Query("SELECT * FROM FEED WHERE owner = :ownerKey AND type = 'pub'")
+    fun getPubsByHostDevice(ownerKey: String): Array<Feed>
 }

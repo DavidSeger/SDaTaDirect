@@ -14,11 +14,12 @@ interface Peer_InfoDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insert(vararg: PeerInfo)
 
-    @Query("SELECT EXISTS(SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND feed_key = :feed_key AND isSubscribed = 1)")
-    fun isSubscribed(wifiAddress: String, feed_key: String): Boolean
+    @Query("SELECT EXISTS(SELECT * FROM peer_info WHERE peer_key = :pubKey AND feed_key = :feed_key AND isSubscribed = 1)")
+    fun isSubscribed(pubKey: String, feed_key: String): Boolean
 
     @Query("SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND isSubscribed = 1")
     fun getAllSubscribed(wifiAddress: String): Array<PeerInfo>
+
 
     @Query("SELECT EXISTS (SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND feed_key = :feedKey)")
     fun exists(wifiAddress: String, feedKey: String): Boolean
@@ -26,7 +27,9 @@ interface Peer_InfoDao {
     @Query("UPDATE peer_info SET isSubscribed = 1 WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :peerAddress) AND feed_key = :feedKey")
     fun subscribe(peerAddress: String, feedKey: String)
 
-    @Query("SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :peerAddress) and feed_key = :feedKey")
+    @Query("SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :peerAddress) AND feed_key = :feedKey")
     fun get(peerAddress: String, feedKey: String): PeerInfo
 
+    @Query("UPDATE peer_info SET lastSentMessage = :newestMessage WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :sender) AND feed_key = :feedKey")
+    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long)
 }

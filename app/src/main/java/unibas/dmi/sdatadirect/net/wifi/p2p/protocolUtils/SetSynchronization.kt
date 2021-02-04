@@ -4,6 +4,7 @@ import android.util.Log
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
 import unibas.dmi.sdatadirect.content.PeerInfoViewModel
+import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Message
 import unibas.dmi.sdatadirect.database.Peer
@@ -32,17 +33,20 @@ class SetSynchronization() {
         private lateinit var peerInfos: PeerInfoViewModel
         private lateinit var feeds: FeedViewModel
         private lateinit var messages: MessageViewModel
+        private lateinit var self: SelfViewModel
 
         fun setup(
             peerViewModel: PeerViewModel,
             peerInfoViewModel: PeerInfoViewModel,
             feedViewModel: FeedViewModel,
-            messageViewModel: MessageViewModel
+            messageViewModel: MessageViewModel,
+            selfViewModel: SelfViewModel
         ) {
             peers = peerViewModel
             peerInfos = peerInfoViewModel
             feeds = feedViewModel
             messages = messageViewModel
+            self = selfViewModel
         }
         //phase 1 methods
 
@@ -80,10 +84,11 @@ class SetSynchronization() {
             var f = feeds.getFeed(feedkey)
             peerInfos.insert(
                 PeerInfo(
-                peer_key = peers.getPeerByWiFiAddress(peerAddress)!!.foreign_public_key!!,
-                feed_key = feedkey,
+                    peer_key = peers.getPeerByWiFiAddress(peerAddress)!!.foreign_public_key!!,
+                    feed_key = feedkey,
                     isSubscribed = false
-            ))
+                )
+            )
             ConnectionManager.sendPackage(peerAddress, PackageFactory.answerFeedInquiry(f))
         }
 
@@ -110,11 +115,11 @@ class SetSynchronization() {
             /**
              * we dont know the owner of this peer, meaning we insert it into our Peer database
              */
-            if(peers.getByPublicKey(feed.owner!!) == null) {
+            if (peers.getByPublicKey(feed.owner!!) == null) {
                 var peer = Peer(
                     id = 0,
                     foreign_public_key = feed.owner
-                    )
+                )
                 peers.insert(peer)
             }
             peerInfos.insert(
@@ -143,20 +148,58 @@ class SetSynchronization() {
         }
 
 
-
         //Phase 2 methods
 
         private fun sendFeedsWithNews(partner: String) {
+            var privateFeed = feeds.getFeedByOwner(self.getSelf().pubKey!!)
             var peer = peerInfos.getAllSubscribed(partner)
+            var updateAlreadySent = 0
+            //send updates for the feeds the partner device has subscribed to
             for (f in peer) {
-                var fLastSeq = messages.getNewestMessage(f.feed_key)
-                if(f.lastSentMessage < fLastSeq) {
-                    ConnectionManager.sendPackage(
-                        partner,
-                        PackageFactory.sendSeqNr(f.feed_key, fLastSeq)
-                    )
+                if (feeds.getFeed(f.feed_key).owner != peers.getPeerByWiFiAddress(partner)!!.foreign_public_key) {
+                    if (f.feed_key == privateFeed.key) updateAlreadySent = 1
+                    var fLastSeq = messages.getNewestMessage(f.feed_key)
+                    if (f.lastSentMessage < fLastSeq) {
+                        ConnectionManager.sendPackage(
+                            partner,
+                            PackageFactory.sendSeqNr(f.feed_key, fLastSeq)
+                        )
+                    }
                 }
             }
+            //send updates on all feeds that are subscribed to a pub hosted by the partner device where the partner device is not subscribed
+            //to the original private feed owner
+            for (f in feeds.getAllFeeds()){
+                if (f.type == "priv") {
+                 for (p in feeds.getPubsByHostDevice(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!)) {
+                        if (peerInfos.isSubscribed(f.owner!!, p.key)){
+                            if (!peerInfos.isSubscribed(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!, f.key)){
+                                var fLastSeq = messages.getNewestMessage(f.key)
+                                ConnectionManager.sendPackage(
+                                    partner,
+                                    PackageFactory.sendSeqNr(f.key, fLastSeq)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            //send updates of this devices feeds to pubs that are not subscribed to this device
+            if(updateAlreadySent == 0) {
+                for (p in feeds.getPubsByHostDevice(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!)) {
+                    if (p.subscribed!!) {
+                        var fLastSeq = messages.getNewestMessage(privateFeed.key)
+                        ConnectionManager.sendPackage(
+                            partner,
+                            PackageFactory.sendSeqNr(privateFeed.key, fLastSeq)
+                        )
+                    }
+                }
+            }
+
+
+            //MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKWH0wxqIsPg8O6iRahixIFJGo0A0K9E/guMZJ1Shwt6UUXxIHqRCv4DWeKxz+2Q0xRN+mU9JIG5HAITU0NuFSfOOx3DypfTk2cSIBTOSnBygb8zyuF5J57uQ05REswlShOX/pMS4biI8iyi2Tjptkz3bbLCa+cvtfI+yEx4JphwIDAQAB
             sendEndPhaseTwoFlag(partner)
         }
 
@@ -194,11 +237,11 @@ class SetSynchronization() {
             var feedsOfPeer = availableFeedsByPeer.get(sender)
             if (feedsOfPeer != null) {
                 for (f in feedsOfPeer!!) {
-                    var feed = feeds.getFeed(f.split("::")[0])
-                    var mostRecentSeqPeer: Long = f.split("::")[1].toLong()
-                    var lastReceivedSeqFeed: Long = feed.last_received_message_seq
-                    if (lastReceivedSeqFeed < mostRecentSeqPeer) {
-                        if (feed.type == "priv") {
+                    if(feeds.getFeed(f.split("::")[0]).type != "pub" || feeds.getFeed(f.split("::")[0]).owner != self.getSelf().pubKey) {
+                        var feed = feeds.getFeed(f.split("::")[0])
+                        var mostRecentSeqPeer: Long = f.split("::")[1].toLong()
+                        var lastReceivedSeqFeed: Long = feed.last_received_message_seq
+                        if (lastReceivedSeqFeed < mostRecentSeqPeer) {
                             ConnectionManager.sendPackage(
                                 sender,
                                 PackageFactory.sendMessageRangeRequest(
@@ -206,8 +249,8 @@ class SetSynchronization() {
                                     lastReceivedSeqFeed
                                 )
                             )
+
                         }
-                        //TODO:: pub case
                     }
                 }
             }
@@ -220,22 +263,54 @@ class SetSynchronization() {
 
         fun receiveRangeMessageRequest(sender: String, feedKey: String?, lowerLimit: Long) {
             var msgs = messages.getNewMessages(feedKey!!, lowerLimit)
-            for (m in msgs){
+            for (m in msgs) {
                 ConnectionManager.sendPackage(sender, PackageFactory.sendMessage(m))
+            }
+            peerInfos.updateLastSentMessage(sender, feedKey, messages.getNewestMessage(feedKey))
+        }
+
+        fun receiveMessage(receivedMessage: Message, sender: String) {
+            if (feeds.getFeed(receivedMessage.feed_key!!).subscribed!!) {
+                messages.insert(receivedMessage)
+            }
+                var myPubs = feeds.getPubsByHostDevice(self.getSelf().pubKey!!)
+            if (myPubs != null) {
+                for (f in myPubs) {
+                    if (peerInfos.isSubscribed(receivedMessage.publisher, f.key)) {
+                        var helpMessage = Message(
+                            message_id = 0,
+                            sequence_Nr = messages.getNewestMessage(f.key) + 1,
+                            signature = receivedMessage.signature,
+                            feed_key = f.key,
+                            content = receivedMessage.content,
+                            timestamp = receivedMessage.timestamp,
+                            publisher = receivedMessage.publisher
+                        )
+                        messages.insert(helpMessage)
+                        if(peerInfos.isSubscribed(peers.getPeerByWiFiAddress(sender)!!.foreign_public_key!!, f.key)) {
+                            ConnectionManager.sendPackage(
+                                sender,
+                                PackageFactory.sendPubUpdate(helpMessage)
+                            )
+                            peerInfos.updateLastSentMessage(sender, f.key, messages.getNewestMessage(f.key))
+                        }
+                    }
+                }
             }
         }
 
-        fun receiveMessage(receivedMessage: Message) {
-            messages.insert(receivedMessage)
-        }
-
         fun receiveEndPhaseThree(sender: String) {
-            if (!isMaster){
+            if (!isMaster) {
                 requestFullFeedUpdates(sender)
             } else {
                 sendLastSync(sender)
             }
         }
+
+        fun receivePubUpdate(receivedMessage: Message, sender: String) {
+            messages.insert(receivedMessage)
+        }
+
 
         //phase 4 methods
         fun receiveLastSync(partner: String, lastSync: Long) {
@@ -251,7 +326,6 @@ class SetSynchronization() {
             peers.setLastSync(peers.getPeerByWiFiAddress(receiver)!!.public_key!!, lastSync)
             ConnectionManager.sendPackage(receiver, PackageFactory.sendLastSync(lastSync))
         }
-
 
 
     }

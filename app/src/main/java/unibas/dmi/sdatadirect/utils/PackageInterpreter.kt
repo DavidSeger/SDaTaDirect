@@ -88,10 +88,28 @@ class PackageInterpreter(
                 signature = signature,
                 timestamp = timestamp
             )
-            SetSynchronization.receiveMessage(receivedMessage)
+            SetSynchronization.receiveMessage(receivedMessage, sender)
         }
         if (method == METHOD.END_PHASE_THREE.name){
             SetSynchronization.receiveEndPhaseThree(sender)
+        }
+        if (method == METHOD.SEND_PUB_UPDATE.name){
+            var feedKey = node.get("feedKey").asText()
+            var sequenceNr = node.get("sequenceNr").asLong()
+            var content = node.get("content").asText().toByteArray(Charsets.UTF_8)
+            var publisher = node.get("publisher").asText()
+            var signature = node.get("signature").asText()
+            var timestamp = node.get("timestamp").asLong()
+            var receivedMessage = Message(
+                message_id = 0,
+                sequence_Nr = sequenceNr,
+                feed_key = feedKey,
+                content = content,
+                publisher = publisher,
+                signature = signature,
+                timestamp = timestamp
+            )
+            SetSynchronization.receivePubUpdate(receivedMessage, sender)
         }
 
     }

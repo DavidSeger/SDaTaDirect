@@ -21,7 +21,7 @@ interface PeerDao {
     @Query("SELECT * FROM peer_table WHERE shared_key LIKE :shared_key")
     fun findBySharedKey(shared_key: String): Peer?
 
-    @Query("SELECT * FROM peer_table WHERE public_key LIKE :public_key")
+    @Query("SELECT * FROM peer_table WHERE foreign_public_key LIKE :public_key")
     fun findByPublicKey(public_key: String): Peer?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

@@ -17,8 +17,8 @@ class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
          peerInfoDao.insert(vararg)
      }
 
-    fun isSubscribed(wifiAddress: String, feed_key: String):Boolean{
-        return peerInfoDao.isSubscribed(wifiAddress, feed_key)
+    fun isSubscribed(pubKey: String, feed_key: String):Boolean{
+        return peerInfoDao.isSubscribed(pubKey, feed_key)
     }
 
     fun getAllSubscribed(receiver: String): Array<PeerInfo> {
@@ -34,5 +34,9 @@ class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
     }
     fun get(peerAddress: String, feedKey: String): PeerInfo {
         return peerInfoDao.get(peerAddress, feedKey)
+    }
+
+    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long) {
+        return peerInfoDao.updateLastSentMessage(sender, feedKey, newestMessage)
     }
 }

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.EventLog
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -39,6 +40,7 @@ class MessageActivity(): AppCompatActivity(){
         feedkey = intent.getStringExtra(feedkeyTag)
         var messageView = EventBus.getDefault().getStickyEvent(MessageViewModel::class.java)
         val selfView = EventBus.getDefault().getStickyEvent(SelfViewModel::class.java)
+        val feedView = EventBus.getDefault().getStickyEvent(FeedViewModel::class.java)
         var msgview: ListView = findViewById(R.id.messages)
         msgview.isClickable = false
         var type = intent.getStringExtra(feedTypeTag)
@@ -65,13 +67,27 @@ class MessageActivity(): AppCompatActivity(){
                     feed_key = feedkey,
                     content = msgPublish.text.toString().toByteArray(charset = Charsets.UTF_8),
                     timestamp = System.currentTimeMillis(),
-                    publisher = selfView.getSelf().name
+                    publisher = selfView.getSelf().pubKey!!
                 )
-                msgPublish.text.clear()
-                hideKeyboard(this)
-
                 messageView.insert(testMessage)
                 message.add(testMessage)
+                var myPubs = feedView.getPubsByHostDevice(selfView.getSelf().pubKey!!)
+                for (f in myPubs){
+                    if (f.subscribed!!) {
+                        var copyMessage = Message (
+                            message_id = 0,
+                            sequence_Nr = messageView.getNewestMessage(f.key) + 1,
+                            signature = Base64.getEncoder().encodeToString(crypto.createSignature(msgPublish.text.toString().toByteArray(Charsets.UTF_8), selfView.getSelf().privKey!!)),
+                            feed_key = f.key,
+                            content = msgPublish.text.toString().toByteArray(charset = Charsets.UTF_8),
+                            timestamp = System.currentTimeMillis(),
+                            publisher = selfView.getSelf().pubKey!!
+                        )
+                        messageView.insert(copyMessage)
+                    }
+                }
+                msgPublish.text.clear()
+                hideKeyboard(this)
                 message.sortBy { it.sequence_Nr }
                 adapter.notifyDataSetChanged()
             }

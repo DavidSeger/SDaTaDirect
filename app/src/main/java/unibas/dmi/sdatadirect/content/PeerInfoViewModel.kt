@@ -28,8 +28,8 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
         repository.unsubscribePeer(wifiAddress, feed_key)
     }
 
-    fun isSubscribed(wifiAddress: String, feed_key: String): Boolean{
-       return repository.isSubscribed(wifiAddress, feed_key)
+    fun isSubscribed(pubKey: String, feed_key: String): Boolean{
+       return repository.isSubscribed(pubKey, feed_key)
     }
 
     fun getAllSubscribed(receiver: String): Array<PeerInfo> {
@@ -46,6 +46,10 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
 
     fun get(peerAddress: String, feedKey: String): PeerInfo {
         return repository.get(peerAddress, feedKey)
+    }
+
+    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long) {
+        return repository.updateLastSentMessage(sender, feedKey, newestMessage)
     }
 
 }

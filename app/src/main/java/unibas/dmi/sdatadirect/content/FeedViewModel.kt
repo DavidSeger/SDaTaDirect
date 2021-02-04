@@ -61,4 +61,7 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
     }
 
 
+    fun getPubsByHostDevice(ownerKey: String): Array<Feed>{
+        return repository.getPubsByHostDevice(ownerKey)
+    }
 }

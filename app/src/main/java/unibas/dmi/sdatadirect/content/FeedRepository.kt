@@ -61,4 +61,8 @@ class FeedRepository(private val feedDao: FeedDao) {
         return feedDao.getFeedByOwner(ownerKey)
     }
 
+    fun getPubsByHostDevice(ownerKey: String): Array<Feed>{
+        return feedDao.getPubsByHostDevice(ownerKey)
+    }
+
 }

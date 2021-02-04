@@ -194,7 +194,7 @@ class MainActivity : AppCompatActivity() {
 
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
         ConnectionManager.peers = peerViewModel
-        SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel)
+        SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel, selfViewModel)
 
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)
@@ -227,8 +227,7 @@ class MainActivity : AppCompatActivity() {
             )
             feedViewModel.insert(selfFeed)
         }
-        var myMessages = messageViewModel.getFullFeed(selfViewModel.getSelf().name + " private Feed")
-        qrCode = QRCode(this)
+         qrCode = QRCode(this)
 
         bluetoothDriver = BluetoothDriver(this, handler, qrCode, cryptoHandler, peerViewModel)
         wifiP2pDriver = WifiP2pDriver(this, cryptoHandler, peerViewModel)

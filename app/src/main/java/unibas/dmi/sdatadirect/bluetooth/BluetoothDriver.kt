@@ -193,16 +193,27 @@ class BluetoothDriver(
                         var peer = peerViewModel.getPeerByBluetoothAddress(it.remoteDevice.address)
 
                         if (peer == null) {
-
-                            val newPeer = Peer(
-                                name = it.remoteDevice.name,
-                                bluetooth_mac_address = it.remoteDevice.address,
-                                wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
-                                shared_key = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!),
-                                public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
-                                private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
-                                foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
-                            )
+                           lateinit var newPeer: Peer
+                            if (peerViewModel.getByPublicKey(qrCode.scannedContent?.split("#")?.get(2)!!) == null) {
+                                newPeer = Peer(
+                                    name = it.remoteDevice.name,
+                                    bluetooth_mac_address = it.remoteDevice.address,
+                                    wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
+                                    shared_key = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!),
+                                    public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                                    private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!),
+                                    foreign_public_key = qrCode.scannedContent?.split("#")?.get(2)
+                                )
+                            } else {
+                                newPeer = Peer(
+                                    name = it.remoteDevice.name,
+                                    bluetooth_mac_address = it.remoteDevice.address,
+                                    wifi_mac_address = qrCode.scannedContent?.split("#")?.get(0),
+                                    shared_key = cryptoHandler.getSecretKeyEncoded(cryptoHandler.secretAESKey!!),
+                                    public_key = cryptoHandler.getPublicKeyEncoded(cryptoHandler.publicRSAKey!!),
+                                    private_key = cryptoHandler.getPrivateKeyEncoded(cryptoHandler.privateRSAKey!!)
+                                    )
+                            }
 
                             peerViewModel.insert(newPeer)
                             val message: Message = Message.obtain()

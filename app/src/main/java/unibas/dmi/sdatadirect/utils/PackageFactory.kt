@@ -20,7 +20,8 @@ class PackageFactory {
         END_PHASE_TWO,
         SEND_RANGE_MESSAGE_REQUEST,
         SEND_MESSAGE,
-        END_PHASE_THREE
+        END_PHASE_THREE,
+        SEND_PUB_UPDATE
     }
 
     companion object {
@@ -94,6 +95,14 @@ class PackageFactory {
         fun endPhaseThree(): ByteArray {
             var method = METHOD.END_PHASE_THREE
             val json = "{\"method\" : \"$method\"}"
+            return encode(json)
+        }
+
+        fun sendPubUpdate(m: Message): ByteArray {
+            var method = METHOD.SEND_PUB_UPDATE
+            val json = "{\"method\" : \"$method\", \"sequenceNr\" : \"${m.sequence_Nr}\", \"feedKey\" : \"${m.feed_key}\", " +
+                    "\"content\" : \"${m.content!!.toString(Charsets.UTF_8)}\", \"publisher\" : \"${m.publisher}\", \"signature\" : \"${m.signature}\", " +
+                    "\"timestamp\" : \"${m.timestamp}\"}"
             return encode(json)
         }
 
