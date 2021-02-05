@@ -10,9 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import org.greenrobot.eventbus.EventBus
 import unibas.dmi.sdatadirect.content.FeedViewModel
 import unibas.dmi.sdatadirect.content.MessageViewModel
+import unibas.dmi.sdatadirect.content.PeerInfoViewModel
 import unibas.dmi.sdatadirect.content.SelfViewModel
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Message
+import unibas.dmi.sdatadirect.database.Peer
+import unibas.dmi.sdatadirect.database.PeerInfo
 import unibas.dmi.sdatadirect.ui.FeedListAdapter
 
 
@@ -35,6 +38,7 @@ class Feed_overview_activity : AppCompatActivity() {
         listView = findViewById(R.id.feedView)
         var messages = EventBus.getDefault().getStickyEvent(MessageViewModel::class.java)
         var selfViewModel = EventBus.getDefault().getStickyEvent(SelfViewModel::class.java)
+        var peerInfoViewModel = EventBus.getDefault().getStickyEvent(PeerInfoViewModel::class.java)
         if (feedViewModel.getAllFeeds() != null) {
             feeds = feedViewModel.getAllFeeds().toCollection(ArrayList())
             feeds.sortBy { it.key }
@@ -67,6 +71,18 @@ class Feed_overview_activity : AppCompatActivity() {
                 var cancelButton: Button = addDialog.findViewById(R.id.cancelButton)
                 subButton.setOnClickListener(){
                     feedViewModel.subscribe(f.key)
+                    if (peerInfoViewModel.exists(selfViewModel.getSelf().pubKey!!, f.key)){
+                        peerInfoViewModel.subscribe(selfViewModel.getSelf().pubKey!!, f.key)
+                    } else{
+                        var peerInfo = PeerInfo(
+                            peerInfo_id = 0,
+                            feed_key = f.key,
+                            peer_key = selfViewModel.getSelf().pubKey!!,
+                            isSubscribed = true,
+                            lastSentMessage = 0
+                        )
+                        peerInfoViewModel.insert(peerInfo)
+                    }
                     feeds.removeAt(i)
                     feeds.sortBy { it.key }
                     listView.adapter = FeedListAdapter(this, R.layout.device_adapter_view, feeds)
@@ -99,6 +115,14 @@ class Feed_overview_activity : AppCompatActivity() {
                     owner = selfViewModel.getSelf().pubKey
                 )
                 feedViewModel.insert(feed)
+                var peerInfo = PeerInfo(
+                    peerInfo_id = 0,
+                    feed_key = nameField.text.toString(),
+                    peer_key = selfViewModel.getSelf().pubKey!!,
+                    isSubscribed = subscribedSwitch.isChecked,
+                    lastSentMessage = 0
+                )
+                peerInfoViewModel.insert(peerInfo)
                 var msgs = messages.getFullFeed(feedViewModel.getFeedByOwner(selfViewModel.getSelf().pubKey!!).key)
                 /**
                  * replicate own messages to put into pub

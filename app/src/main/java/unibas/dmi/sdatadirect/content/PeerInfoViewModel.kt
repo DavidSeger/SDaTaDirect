@@ -36,20 +36,24 @@ class PeerInfoViewModel(application: Application): AndroidViewModel(application)
         return repository.getAllSubscribed(receiver)
     }
 
-    fun exists(receiver: String, feed_key: String):Boolean{
-        return repository.exists(receiver, feed_key)
+    fun exists(pubKey: String, feed_key: String):Boolean{
+        return repository.exists(pubKey, feed_key)
     }
 
-    fun subscribe(peerAddress: String, feedkey: String) {
-        repository.subscribePeer(peerAddress, feedkey)
+    fun subscribe(peerKey: String, feedkey: String) {
+        repository.subscribePeer(peerKey, feedkey)
     }
 
-    fun get(peerAddress: String, feedKey: String): PeerInfo {
-        return repository.get(peerAddress, feedKey)
+    fun get(pubKey: String, feedKey: String): PeerInfo {
+        return repository.get(pubKey, feedKey)
     }
 
-    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long) {
-        return repository.updateLastSentMessage(sender, feedKey, newestMessage)
+    fun updateLastSentMessage(peerKey: String, feedKey: String, newestMessage: Long) {
+        return repository.updateLastSentMessage(peerKey, feedKey, newestMessage)
+    }
+
+    fun getAll():Array<PeerInfo>{
+        return repository.getAll()
     }
 
 }

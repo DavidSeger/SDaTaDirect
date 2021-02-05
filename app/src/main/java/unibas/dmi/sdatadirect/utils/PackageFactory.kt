@@ -1,5 +1,6 @@
 package unibas.dmi.sdatadirect.utils
 
+import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import unibas.dmi.sdatadirect.database.Feed
 import unibas.dmi.sdatadirect.database.Message

@@ -449,6 +449,7 @@ class MainActivity : AppCompatActivity() {
             EventBus.getDefault().postSticky(messageViewModel)
             EventBus.getDefault().postSticky(cryptoHandler)
             EventBus.getDefault().postSticky(selfViewModel)
+            EventBus.getDefault().postSticky(peerInfoViewModel)
         }
         startActivity(feedIntent)
 

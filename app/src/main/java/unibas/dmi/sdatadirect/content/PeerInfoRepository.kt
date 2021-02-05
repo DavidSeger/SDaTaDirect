@@ -25,18 +25,22 @@ class PeerInfoRepository(private val peerInfoDao: Peer_InfoDao) {
         return peerInfoDao.getAllSubscribed(receiver)
     }
 
-    fun exists(receiver: String, feed_key: String): Boolean{
-        return peerInfoDao.exists(receiver, feed_key)
+    fun exists(pubKey: String, feed_key: String): Boolean{
+        return peerInfoDao.exists(pubKey, feed_key)
     }
 
-    fun subscribePeer(peerAddress: String, feedkey: String) {
-        return peerInfoDao.subscribe(peerAddress, feedkey)
+    fun subscribePeer(peerKey: String, feedkey: String) {
+        return peerInfoDao.subscribe(peerKey, feedkey)
     }
-    fun get(peerAddress: String, feedKey: String): PeerInfo {
-        return peerInfoDao.get(peerAddress, feedKey)
+    fun get(pubKey: String, feedKey: String): PeerInfo {
+        return peerInfoDao.get(pubKey, feedKey)
     }
 
-    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long) {
-        return peerInfoDao.updateLastSentMessage(sender, feedKey, newestMessage)
+    fun updateLastSentMessage(peerKey: String, feedKey: String, newestMessage: Long) {
+        return peerInfoDao.updateLastSentMessage(peerKey, feedKey, newestMessage)
+    }
+
+    fun getAll():Array<PeerInfo>{
+        return peerInfoDao.getAll()
     }
 }

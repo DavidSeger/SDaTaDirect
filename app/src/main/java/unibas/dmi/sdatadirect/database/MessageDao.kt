@@ -22,6 +22,6 @@ interface MessageDao {
     @Query("SELECT * FROM message WHERE feed_key = :feed_key AND signature = :signature ORDER BY sequenceNumber ASC")
     fun getAllBySignature(feed_key: String, signature: String): Array<Message>
 
-    @Query("SELECT MAX(sequenceNumber) FROM message WHERE feed_key = :feed_key GROUP BY feed_key")
+    @Query("SELECT MAX(sequenceNumber) FROM message WHERE feed_key = :feed_key")
     fun getNewestMessage(feed_key: String): Long
 }

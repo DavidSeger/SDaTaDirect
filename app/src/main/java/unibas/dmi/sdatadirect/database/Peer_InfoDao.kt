@@ -21,15 +21,18 @@ interface Peer_InfoDao {
     fun getAllSubscribed(wifiAddress: String): Array<PeerInfo>
 
 
-    @Query("SELECT EXISTS (SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :wifiAddress) AND feed_key = :feedKey)")
-    fun exists(wifiAddress: String, feedKey: String): Boolean
+    @Query("SELECT EXISTS (SELECT * FROM peer_info WHERE peer_key = :pubKey AND feed_key = :feedKey)")
+    fun exists(pubKey: String, feedKey: String): Boolean
 
-    @Query("UPDATE peer_info SET isSubscribed = 1 WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :peerAddress) AND feed_key = :feedKey")
-    fun subscribe(peerAddress: String, feedKey: String)
+    @Query("UPDATE peer_info SET isSubscribed = 1 WHERE peer_key = :peerKey AND feed_key = :feedKey")
+    fun subscribe(peerKey: String, feedKey: String)
 
-    @Query("SELECT * FROM peer_info WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :peerAddress) AND feed_key = :feedKey")
-    fun get(peerAddress: String, feedKey: String): PeerInfo
+    @Query("SELECT * FROM peer_info WHERE peer_key = :pubKey AND feed_key = :feedKey")
+    fun get(pubKey: String, feedKey: String): PeerInfo
 
-    @Query("UPDATE peer_info SET lastSentMessage = :newestMessage WHERE peer_key = (SELECT foreign_public_key FROM peer_table WHERE wifi_mac_address = :sender) AND feed_key = :feedKey")
-    fun updateLastSentMessage(sender: String, feedKey: String, newestMessage: Long)
+    @Query("SELECT * FROM peer_info")
+    fun getAll(): Array<PeerInfo>
+
+    @Query("UPDATE peer_info SET lastSentMessage = :newestMessage WHERE peer_key = :peerKey AND feed_key = :feedKey")
+    fun updateLastSentMessage(peerKey: String, feedKey: String, newestMessage: Long)
 }
