@@ -14,12 +14,11 @@ import unibas.dmi.sdatadirect.peer.PeerViewModel
 import unibas.dmi.sdatadirect.utils.PackageFactory
 
 /**
- * receiver side of the reconciliation protocol
+ * The set synchronization protocol implementation. The synchronization can be started from any phase,
+ * connection stays open after the synchronization is done. When you connect to a peer it
+ * automatically goes through the full protocol with the newly connected peer
  */
 
-/**
- * TODO:: find out why pub messages are duplicated after sync
- */
 class SetSynchronization() {
     companion object {
         val TAG = "SetSynchronization"
@@ -80,10 +79,18 @@ class SetSynchronization() {
             }
         }
 
+        /**
+         * ask the peer for the full feed
+         */
         private fun inquireFeedDetails(feedkey: String, peerAddress: String) {
             ConnectionManager.sendPackage(peerAddress, PackageFactory.inquireFeedDetails(feedkey))
         }
 
+        /**
+         * method that answers a feed inquiry, it updates the peer info table by inserting
+         * the fact that the peer now knows this feed as well (set to fals eby default, since
+         * the feed subscription is an opt-in thing)
+         */
         fun receiveFeedInquiry(feedkey: String, peerAddress: String) {
             var f = feeds.getFeed(feedkey)
             peerInfos.insert(
@@ -96,6 +103,11 @@ class SetSynchronization() {
             ConnectionManager.sendPackage(peerAddress, PackageFactory.answerFeedInquiry(f))
         }
 
+        /**
+         * start of phase 1: based on the last synchronization with the peer, the device sends updates
+         * about all the changes in feeds that occurred since the last snyc. This includes subscribing to a feed,
+         * unsubscribing from a feed or if the device has discovered/created a new feed or pub
+         */
         private fun sendFeedUpdates(receiver: String) {
             //phase 1: get all feeds that have changed something since the last sync,
             //send for all changed feeds a package notifying the sync partner (if this is
@@ -110,11 +122,16 @@ class SetSynchronization() {
             sendEndPhaseOneFlag(receiver)
         }
 
+        /**
+         * Receive an, as of yet, undiscovered feed and save it as a new known feed, per default
+         * the device is not subscribed to it.
+         */
         fun receiveFeedInquiryAnswer(
             feed: Feed,
             subscribed: Boolean,
             sender: String
         ) {
+            feed.subscribed = false
             feeds.insert(feed)
             /**
              * we dont know the owner of this peer, meaning we insert it into our Peer database
@@ -137,10 +154,19 @@ class SetSynchronization() {
 
         }
 
+        /**
+         * send a flow control flag to the partner, signaling it that all the updates are sent,
+         * giving the control to it to send its updates.
+         */
         private fun sendEndPhaseOneFlag(receiver: String) {
             ConnectionManager.sendPackage(receiver, PackageFactory.endPhaseOne())
         }
 
+        /**
+         * receive the signal to end phase one for this device. If this device is the instigator
+         * of the synchronization (shown with the "isMaster" boolean) the protocol moves on to
+         * phase 2, if it is the passive partner, this starts the feed update process for this device
+         */
         fun receiveEndPhaseOne(sender: String) {
             if (!isMaster) {
                 sendFeedUpdates(sender)
@@ -153,10 +179,18 @@ class SetSynchronization() {
 
 
         //Phase 2 methods
-
+        /**
+         * with this method the device lets its partner know in which feeds, that the partner has
+         * subscribed to, new messages have been inserted since the last meeting. we use the "last sent sequence number"
+         * field in the peer info table as a way to know if new messages have been inserted. because of the nature
+         * of pubs, we also forward messages of feeds that the partner is not subscribed to, if the partner
+         * is hosting a pub that the feed is subscribed to (this is what happens in the second loop).
+         * Here we also update the last sent message to a peer regarding a feed.
+         */
         private fun sendFeedsWithNews(partner: String) {
             var peer = peerInfos.getAllSubscribed(partner)
-            //send updates for the feeds the partner device has subscribed to
+            //send updates for the feeds the partner device has subscribed to.
+            //Update the peer info to reflect that we have offered the peer the messages up to this seq.
             for (f in peer) {
                 if (feeds.getFeed(f.feed_key).owner != peers.getPeerByWiFiAddress(partner)!!.foreign_public_key) {
                     var fLastSeq = messages.getNewestMessage(f.feed_key)
@@ -171,7 +205,7 @@ class SetSynchronization() {
                 }
             }
             //send updates on all feeds that are subscribed to a pub hosted by the partner device where the partner device is not subscribed
-            //to the original private feed owner
+            //to the original private feed owner. Update the peer info to reflect that we have offered the peer the messages up to this seq.
             for (f in feeds.getAllFeeds()){
                 if (f.type == "priv") {
                  for (p in feeds.getPubsByHostDevice(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!)) {
@@ -196,10 +230,13 @@ class SetSynchronization() {
 
 
 
-            //MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKWH0wxqIsPg8O6iRahixIFJGo0A0K9E/guMZJ1Shwt6UUXxIHqRCv4DWeKxz+2Q0xRN+mU9JIG5HAITU0NuFSfOOx3DypfTk2cSIBTOSnBygb8zyuF5J57uQ05REswlShOX/pMS4biI8iyi2Tjptkz3bbLCa+cvtfI+yEx4JphwIDAQAB
-            sendEndPhaseTwoFlag(partner)
+             sendEndPhaseTwoFlag(partner)
         }
 
+        /**
+         * receive a feed that contains potentially new messages. encode it as a String to store it in
+         * a temporary hash map
+         */
         fun receiveFeedUpdateList(sender: String, feedKey: String?, lastSeq: Long) {
             if (availableFeedsByPeer.containsKey(sender)) {
                 var feedList = availableFeedsByPeer.get(sender)
@@ -211,10 +248,18 @@ class SetSynchronization() {
             }
         }
 
+        /**
+         * end this phase of the protocol for this device
+         */
         private fun sendEndPhaseTwoFlag(receiver: String) {
             ConnectionManager.sendPackage(receiver, PackageFactory.endPhaseTwo())
         }
 
+        /**
+         * receive the signal to end phase two for this device. If this device is the instigator
+         * of the synchronization (shown with the "isMaster" boolean) the protocol moves on to
+         * phase 3, if it is the passive partner, this starts the message offering process for this device
+         */
         fun receiveEndPhaseTwo(sender: String) {
             if (!isMaster) {
                 sendFeedsWithNews(sender)
@@ -226,9 +271,9 @@ class SetSynchronization() {
         //phase 3 methods
 
         /**
-         * this method is used automatically upon a connection with a peer, it
-         * asks for all news for all private feeds it has subscribed to, and updates all
-         * pubs it is hosting.
+         * this method asks for all news for all private feeds and pubs it has subscribed to (that are not hosted
+         * by itself). it compares the newest sequence number it has in the feed and the newest sequence number
+         * of the feed of the partner, if the partner has newer messages, it requests them from the partner
          */
         private fun requestFullFeedUpdates(sender: String) {
             var feedsOfPeer = availableFeedsByPeer.get(sender)
@@ -249,15 +294,23 @@ class SetSynchronization() {
 
                         }
                     }
+                    feedsOfPeer.remove(f)
                 }
             }
             sendEndPhaseThreeFlag(sender)
         }
 
+        /**
+         * end the phase three for this device
+         */
         private fun sendEndPhaseThreeFlag(sender: String) {
             ConnectionManager.sendPackage(sender, PackageFactory.endPhaseThree())
         }
 
+        /**
+         * answer a message request by sending all messages that the partner has requested,
+         * starting from the newest message the partner has in its feed
+         */
         fun receiveRangeMessageRequest(sender: String, feedKey: String?, lowerLimit: Long) {
             var msgs = messages.getNewMessages(feedKey!!, lowerLimit)
             for (m in msgs) {
@@ -265,6 +318,12 @@ class SetSynchronization() {
             }
         }
 
+        /**
+         * receive the requested messages and insert them in the corresponding feeds. if the message is part
+         * of a pub this device is hosting, insert it in the pub feed as well. Furthermore, if the sync partner
+         * itself is subscribed to one of the pubs, send it the new pub update directly, so both are up to date.
+         * We also update the peer info to reflect the last messages of the pub that we have sent to the peer
+         */
         fun receiveMessage(receivedMessage: Message, sender: String) {
             messages.insert(receivedMessage)
             feeds.updateLastReceivedMessage(messages.getNewestMessage(receivedMessage.feed_key!!), receivedMessage.feed_key!!)
@@ -294,6 +353,11 @@ class SetSynchronization() {
             }
         }
 
+        /**
+         * receive the signal to end phase three for this device. If this device is the instigator
+         * of the synchronization (shown with the "isMaster" boolean) the protocol moves on to
+         * phase 4, if it is the passive partner, this starts the message update process for this device
+         */
         fun receiveEndPhaseThree(sender: String) {
             if (!isMaster) {
                 requestFullFeedUpdates(sender)
@@ -302,6 +366,10 @@ class SetSynchronization() {
             }
         }
 
+        /**
+         * receive a pub update from the current synchronization partner, update the last
+         * sent message to reflect that we have forwarded the message from Feed X to pub Y
+         */
         fun receivePubUpdate(receivedMessage: Message, sender: String) {
             messages.insert(receivedMessage)
             peerInfos.updateLastSentMessage(peers.getPeerByWiFiAddress(sender)!!.foreign_public_key!!, receivedMessage.feed_key!!, messages.getNewestMessage(receivedMessage.feed_key!!))
@@ -309,6 +377,9 @@ class SetSynchronization() {
 
 
         //phase 4 methods
+        /**
+         * receive a timestamp sync message, safe the last sync time with this device.
+         */
         fun receiveLastSync(partner: String, lastSync: Long) {
             peers.setLastSync(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!, lastSync)
         }
