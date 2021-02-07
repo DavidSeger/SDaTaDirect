@@ -1,0 +1,30 @@
+title History Aware Set Synchronization Protocol
+
+note right of Bob: Every participant in the p2p network has a database containting \n meta-data about the communication, mainly timestamps of \n the last snychronization with any given peer, the last known \n transmitted message for every feed/peer pair and infos about \n which peer is subscribed to which feed or peer
+note right of Bob: Phase 1: Exchange news about subscribtions, \n unsubscriptions and newly discovered feeds or pubs
+loop repeat for both participants as update sender and receiver
+Bob->+Alice: Send all changes in feeds or feed subscriptions \n since last meeting with Alice
+Alice -->-Bob: Request the full feed if it is unknown to Alice
+Bob -->-Alice: Answer the feed requests
+Bob ->Alice: end phase 1
+end
+
+note right of Bob: Phase 2: Exchange the newest available message \n sequence number for every interesting feed or pub
+
+loop repeat for both participants as update sender and receiver
+Bob->Alice: Send the sequence number of the newest \n available message in every relevant feed, \n given there are new messages since the last sync
+Bob ->Alice: end phase 2
+end
+
+note right of Bob: Phase 3: Exchange relevent new content of the feeds
+
+loop repeat for both participants as update sender and receiver
+Bob->+Alice: Request a range of messages posted in the relevant \n feeds, given there are messages Alice has not received yet
+Alice ->-Bob: Answer the message requests with the corresponding \n messages
+Bob -->Alice: Given Bob is a Pub hoster that Alice is subscribed \n to, update Alice about the successfully published pub content
+Bob -> Alice: End Phase 3
+end
+
+note right of Bob: Phase 4: synchronize the last synchronization timestamp across \n both synchronization participants
+Bob -> Alice: Send the last synchronization timestamp
+
