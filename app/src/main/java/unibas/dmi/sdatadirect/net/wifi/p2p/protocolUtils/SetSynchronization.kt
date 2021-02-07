@@ -16,7 +16,9 @@ import unibas.dmi.sdatadirect.utils.PackageFactory
 /**
  * The set synchronization protocol implementation. The synchronization can be started from any phase,
  * connection stays open after the synchronization is done. When you connect to a peer it
- * automatically goes through the full protocol with the newly connected peer
+ * automatically goes through the full protocol with the newly connected peer. The isMaster flag
+ * is used for communication flow control. If the synchronization is to be started manually, starting
+ * from any phase needed, the flag has to be set to true for whoever started the synchronization.
  */
 
 class SetSynchronization() {
