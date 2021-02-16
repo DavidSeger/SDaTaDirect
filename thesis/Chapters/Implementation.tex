@@ -19,7 +19,7 @@ The SDaTaDirect app already has a database set up, but because its only use was 
 	\label{fig:ER}
 \end{figure}
 
-\section{Adapting the GUI}
+\section{Extending the GUI}
 
 While no changes had to be made to the way devices connect to each other in the app, and therefore no additional interfaces had to be created to initialize the synchronization, the GUI needed to be changed to allow for dynamic content creation, interaction and viewing of the feeds the app has discovered. 
 \\
@@ -33,7 +33,7 @@ The user can visit its own feed after starting the app on the feed view, as can 
 	\label{fig:emptyFeed}
 \end{figure}
  
-When the user clicks on a feed, the app opens up a view of all the messages in the feed that this device has received, if the user is allowed to publish messages in the feed (if the feed belongs to this device), a small text box allows the user to create messages that will be posted in the feed. A user can create as many pubs as they want, inw which any messages published in the private feed of the device owner automatically will be published. 
+When the user clicks on a feed, the app opens up a view of all the messages in the feed that this device has received, if the user is allowed to publish messages in the feed (if the feed belongs to this device), a small text box allows the user to create messages that will be posted in the feed. A user can create as many pubs as they want, in which any messages, published in the private feed of the device owner, automatically will be reproduced. In \ref{fig:pub1} we can see the dialog to create a new peer, and in \ref{fig:pub2} you can see the reproduced messages that were originally published in the creators private feed, which can be seen in \ref{fig:FeedView}
 \begin{figure}
 	\centering
 	\begin{minipage}{.5\textwidth}
@@ -50,10 +50,15 @@ When the user clicks on a feed, the app opens up a view of all the messages in t
 	\end{minipage}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[!t]
 	\centering
 	\includegraphics[scale = 0.1]{"privateFeedMessagesPublished.jpg"}
 	\caption{The interface of a feed in which the user is allowed to publish messages}
 	\label{fig:FeedView}
 \end{figure}
+
+\section{Adapting the Protocol as a Kotlin Script}
+
+
+
 
