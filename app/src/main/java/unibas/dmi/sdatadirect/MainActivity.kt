@@ -434,16 +434,6 @@ class MainActivity : AppCompatActivity() {
      * start connections, start chat
      */
     fun startChat(){
-      /*  val chatIntent = Intent(this, ChatActivity::class.java).apply {
-            action = ChatActivity.ACTION_SEND_CHAT
-            putExtra(ChatActivity.EXTRAS_DESTINATION_ADDRESS, wifiP2pDriver.targetDeviceAddress)
-            putExtra(ChatActivity.EXTRAS_HOST_ADDRESS,
-                wifiP2pDriver.groupOwnerAddress)
-            putExtra(ChatActivity.EXTRAS_HOST_PORT, 8888)
-            EventBus.getDefault().postSticky(peerViewModel)
-            EventBus.getDefault().postSticky(cryptoHandler)
-        }*/
-       // startActivity(chatIntent)
         val feedIntent = Intent(this, Feed_overview_activity::class.java).apply {
            EventBus.getDefault().postSticky(feedViewModel)
             EventBus.getDefault().postSticky(messageViewModel)

@@ -1,0 +1,95 @@
+% !TEX root = ../Thesis.tex
+\chapter{Designing the Protocol}
+
+To design a history aware set synchronization protocol in the vein of the Scuttlebutt p2p protocol, one of the first things to consider is the data the protocol can work with. Because of the nature of history awareness, we need to define different data objects that can be used to design the protocol. 
+
+\section{Needed Data}
+\label{sec:Data_Identification}
+
+To reduce the amount of traffic in the network we will have to save as much information about the different connections as possible, in this step we will try to identify the data needed to keep non-content (read: control messages) packages at a minimum:
+
+\begin{enumerate}
+	\item To only allow communication about feeds that the peers are actually interested in, we have to save information about which peer is following which feeds or pubs.
+	\item We want to ensure that the saved information, which will dictate the feeds that will be relevant in the protocol, is always up to date. the first history aware element we will have to include is a measure to know if changes have occured in the feed subscriptions since the last synchronization.
+	\item To filter out any uninteresting feeds, the peers have to know which feeds dont have any new messages in them, for this we need to have a way to save if any new messages arrived in a relevant feed since the last synchronization
+\end{enumerate}
+
+To address requirement one, every application implementing this protocol needs to maintain a database where every peer is saved and which feed he is subscribed to. The second requirement can be easily implemented using timestamps, these timestamps have to be attached to every peer in our database, signaling the last synchronization, as well as to every feed, where we update it every time we discover a new one, when we subscribe or when we unsubscribe from a feed. The last thing we need requirement three, this can be achieved by assigning message sequence numbers to every message published in a feed, and by saving, after every synchronization, what the last message sequence number of a feed was that we have transmitted to the partner.
+\\
+\\
+With these data requirements identified we can move on to designing a protocol, we constructed it with 4 general phases in mind, which will be explained further in the following sections
+
+\section{Design Goals of the Protocol}
+
+There were some goals we kept in mind while developing the protocol, that are worthy mentioning here.
+\\
+\\
+During the creation we decided on a "pull instead of push" approach, this can be seen in phase 3, no messages get exchanged if the partner doesn't ask for them first, this was planned this way to keep it more flexible for different kind of usages, for example if multiple devices are currently connected to device X, device X can actively chose from which of its peers it wants to receive the updates of a specific feed from, one obvious reason being if one of the devices has more messages in the feed than the others.
+\\
+\\
+the phases of the protocol are largely kept independent from each other, while a complete set synchronization is performed when two devices go through all of the steps, it is possible to trigger the phases independently, depending on what the application that implements it, needs. To give an example, if a chess application running over a p2p network uses this protocol, it would not need phase 1 and 4 of the protcol. We designed it in such a way that it supports the same structures as can be found in Scuttlebutt, but it is a protocol that can be used for any kind of append only set synchronization.
+
+\section{History Aware Set Synchronization Protocol}
+\subsection{Phase One: Updating the Peer}
+
+The first phase is used to update the peers database, since we are working in a history aware environment, we dont need to exchange a whole list of all feeds that we are subscribed to, every time we connect to each other. There are two possible messages that can be sent in this phase, "subscribed" and "unsubscribed", the two devices simply check in their database when the last synchronization between them was, and send a short update to the peer for every feed in which a change happened after the last synchronization. In case a new feed was discovered by one of the peers, and the partner is not yet aware of this feed, the update message will trigger a probe, asking for details on the feed. In \ref{fig:PhaseOneExample} we can see a hypothetical interaction between two devices in phase 1.
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[]{"PhaseOneExample.pdf"}
+	\caption{An example of how phase one could look like for Bob and Alice}
+	\label{fig:PhaseOneExample}
+\end{figure}
+
+The protocol coordinates itself using flags to signal the partner that they are done sending their data and that they are ready to receive the data of the partner, the same flag is used to move on to the next phase.
+
+\subsection{Phase Two: Notify the Peer of the Available Information}
+\label{sec:phaseTwo}
+In phase one we ensured that the further communication of the protocol is only limited to feeds that are relevant to this synchronization. The filtering goes a step further in phase two, the two devices go through the list of relevant feeds for the partner, and compare the sequence number of the newest available message in the feed with the sequence number of the last message that they have sent this particular peer in this particular feed, as we have defined in requirement three in \ref{sec:Data_Identification}. If the sequence number in our local version of the feed is greater than the sequence number of the last transmitted message, we send a package containing the sequence number of the newest available message. If there are no new messages in the local feed, it will be discarded and not further considered in phase 3. In \ref{fig:PhaseTwoExample} we can see a hypothetical interaction between two devices in phase 2.
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[]{"PhaseTwoExample.pdf"}
+	\caption{An example of how phase two could look like for Bob and Alice}
+	\label{fig:PhaseTwoExample}
+\end{figure}
+
+Again, the phase is coordinated with flags that give the control to the other device or trigger the start of the next phase.
+
+\subsection{Phase three: Requesting the Messages Missing in our Local Feeds}
+
+The devices save a list of all the feeds and sequence numbers they have received in phase two, now, in phase three, they internally compare the newest available sequence number of the peer with the newest message the device has in its local version of the feed. If the remote device has content that this device has yet to receive, it sends out a request to its partner, containing the sequence number of the newest message that the device has saved in the feed, the remote device will answer this request by sending all messages with a newer sequence number than the one that it received to the device. When both devices went through all of the feeds they have saved from phase 2, they will both have synchronized all of the feeds theyre interested in. With filtering out feeds not eligable for synchronization in phase one and two, we hope to reduce the network communication compared to the simpler approach of Scuttlebutt, in which the devices ask for new messages in every feed. A simple example about how phase 3 could look for two devices can be seen in \ref{fig:PhaseThreeExample}.
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[]{"PhaseThreeExample.pdf"}
+	\caption{An example of how phase three could look like for Bob and Alice}
+	\label{fig:PhaseThreeExample}
+\end{figure}
+
+The communication control flags are once again included to guide the protocol along. The end of phase three automatically triggers phase 4.
+
+\subsection{Phase Four: Synchronizing the Timestamps}
+
+In the last phase of the protocol we simply want to make sure that no discrepancy between the last synchronization timestamp occurs between the two devices, so the initiator of the synchronization sends out the timestamp to be saved as the last synchronization time. This is a simple one package operation, as can be seen in \ref{fig:PhaseFourExample}.
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[]{"PhaseFourExample.pdf"}
+	\caption{An example of how phase four could look like for Bob and Alice}
+	\label{fig:PhaseFourExample}
+\end{figure}
+
+After the timestamp synchronization, the protocol is done.
+\clearpage
+\subsection{The full protocol}
+
+If we put all of the phases together, we arrive at the final product of our design efforts, in \ref{fig:protocol} we can see the full protocol that will be the basis of the practical portion of this work.
+
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[scale=0.4]{"protocol.png"}
+	\caption{The final design of the set synchronization protocol}
+	\label{fig:protocol}
+\end{figure}

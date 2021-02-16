@@ -1,0 +1,56 @@
+% !TEX root = ../Thesis.tex
+\chapter{Related Work}
+
+This thesis is largely based on two seperate works, the Scuttlebutt protocol\footnote{https://scuttlebutt.nz/docs/protocol/} and its functions as the model for an append only set that can be further used in many different ways, such as gaming or building a social media plattform, and the app "SDaTaDirect"\footnote{https://github.com/GowthamanG/SDaTaDirect}, built by Gowthaman Gobalasingam as a bachelors project, which will be the base for the practical part of this work. We will now take a closer look at these works and how they played a role in the realization of this project.
+
+\section{The Scuttlebutt Protocol}
+\label{sec:the_scuttlebutt_protocol}
+\subsection{What is Scuttlebutt}
+Scuttlebutt\footnote{https://scuttlebutt.nz/} is a decentralized social media plattform, it largely follows the idea of other social media sites, people can post content on their feeds, follow other peoples feeds and interact with them. What differentiates Scuttlebutt is the p2p approach they chose, since there is no central server participants connect to, people need to either have a direct link to peers, in the form of their scuttlebutt ID, or discover other peers in a "Pub", another type of feed where people can subscribe to, making their feed visible for the other subscribers of this pub, allowing people to discover new peers and growing their p2p network. Pubs are always online and their ID, to subscribe to a pub, is distributed through other means, mainly through posting it on the conventional internet.
+
+\subsection{The Protocol}
+\label{sec:scuttlebutt_protocol_detailed}
+The scuttlebutt protocol is a flexible communication protocol that can be used for an wide array of applications, one of the first and most common uses is its implementation as a social media plattform as described in \ref{sec:the_scuttlebutt_protocol}. The following explanations are paraphrased from the Scuttlebutt Protocol Guide\cite{ScuttlebuttProtocol}:
+\\
+\\
+Every user of a Scuttlebutt based application has an identity, it is generated upon the first registration in a Scuttlebutt network and consists of an Ed25519 key pair, this key pair is non-volatile and identifies an entity in the network. The public key is used as an identifier, the private key is used to sign messages distributed in the network, this is the basis for the security of the protocol. Pubs have the same kind of identity. Every ID is associated with a feed, a set of messages posted by a given entity. 
+\\
+\\
+Messages in a given feed form an append only log, they are backwards linked with each other, allowing an easy access to a stream of messages. Messages are signed by the publisher using its own private key. With this, the protocol ensures that no third party can alter the message and claim it is published by the original author. Communication between peers happens over a Remote Procedure Call Protocol (RPC), peers send packages containing an procedure identifier to a remote partner, who then executes the specified procedure, possibly using arguments also contained in the packages, locally. Synchronization of feeds happens after connecting to a peer, a device sends a RPC to its peer, in which it requests all messages newer than the last message it has received in a given feed. The peer answers this request with a stream of messages, beginning at the newest and moving down the message chain until it has forwarded all messages.
+\\
+\begin{figure}[!h]
+	\centering
+	\includegraphics[scale=0.4]{"scuttlebuttRpc.png"}
+	\caption{A RPC request for new messages in a feed\cite{ScuttlebuttProtocol}}
+	\label{fig:rpcRequest}
+\end{figure}
+
+the most common implementation of Scuttlebutt, patchwork\footnote{https://github.com/ssbc/patchwork}, follows the policy of requesting and saving messages of all feeds that are up to three hops away, with the first hop being all feeds that the client has actually subscribed to. It shows the user all messages in a two hop distance, and caches the messages of the feeds that are three hops away, as can be seen in \ref{fig:followGraph}
+\clearpage
+
+\begin{figure}[!t]
+	\centering
+	\includegraphics[width=0.9\textwidth]{"follow_graph.png"}
+	\caption{Graph showcasing the follow relations and the messages being cashed in Patchwork\cite{ScuttlebuttProtocol}}
+	\label{fig:followGraph}
+\end{figure}
+
+This, paired with the fact that Scuttlebutt is not history aware, leads to a large amount of requests, answers and data being tranferred between peers when connecting to each other. While we will adapt the basic concepts of feeds, pubs and messages to our app, we will add metadata concerning past connections and reduce the reach of the protocol implementation to 1 hop, to increase the efficiency of the implementation.
+
+\section{SDaTaDirect}
+\label{sec:SDataDirect}
+SDataDirect will be the security basis for implementation. The App was developed by Gowthaman Gobalasingam, it implements a protocol created by him to ensure secure data transfer on the basis of WifiDirect\cite{SDaTaDirect}.
+\subsection{The Protocol}
+The app follows a three phase procedure: The users first each scan a QR-Code of the exchange partner, these QR codes include the devices wifi mac address, a symmetrical AES key, and the public key of a generated RSA key pair. These keys are the cryptographic basis of the protocol, they are newly generated for all peers a device wishes to connect to, and saved in an internal database. At the end of phase 1, both parties agree on one of the generated symmetrical AES keys for further communication. In phase 2, the two devices connect via Bluetooth, over which they exchange the signature of the AES key pair, to verify that the devises are actually connected to the right peer. In phase 3 the wifi direct connection gets started, the devices connect to each other, and the client can send the host a file, which is encrypted using the symmetrical key and signed using the private key. The file is only encrypted once the signature has been verified using the previously exchanged public key. Using the combination of AES and RSA keys, as well as the verification pf the peer in phase 2, ensures that it is impossible for any kind of man in the middle attack, be it reading the exchanged file or manipulating it in any way. 
+\subsection{The App}
+The app was implemented using Kotlin\footnote{https://kotlinlang.org/}, a programming language by JetBrains, it is fully interoperable with Java and has taken center stage in android development, as stated by googles "kotlin-first" commitment\cite{Kotlin}. 
+\\
+\begin{figure}[!h]
+	\centering
+	\includegraphics[scale=0.35]{"sdatadirectui.png"}
+	\caption{The UI of the SDaTaDirect application\cite{SDaTaDirect}}
+	\label{fig:appUI}
+\end{figure}
+\\
+The app provides a simple interface to connect with a peer and exchange a file, the exchange is one-way only, and after a file has been exchanged, the connection will be closed. The app will provide the cryptographic basis for the implementation, we will keep the three phase security protocol, but modify the implementation to provide two-way communication, non-aborting connections and the feed/pub functionality as explained in \ref{sec:scuttlebutt_protocol_detailed}. With a basis for the realization of the theoratical work, we can now go on to have a look at the design of the protocol.
+

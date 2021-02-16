@@ -1,0 +1,69 @@
+%% ----------------------------------------------------------------
+%% Thesis.tex -- main
+%% ---------------------------------------------------------------- 
+
+\documentclass[a4paper, 10pt, oneside]{memoir}
+%% Use the option citeauthor to be able to use citet. The default cite will still work.
+\usepackage[citeauthor]{basilea}
+\usepackage[justification=centering]{caption}
+
+%% ----------------------------------------------------------------
+
+\title				{Secure and History-Aware Peer-to-Peer Set 		Synchronization on Android}
+\thesistype			{Bachelors Project}
+
+\department 		    {Department of Mathematics and Computer Science}
+\faculty			{Faculty of Science of the University of Basel}
+\research		    {Computer Networks Research Group \\ https://cn.dmi.unibas.ch/}
+
+\examiner    		{Prof. Dr. Christian Tschudin}
+\supervisor  		{Claudio Marxer, MSc.}
+
+\authors     		{David Seger}
+\email				{david.seger@stud.unibas.ch}
+\immatriculnr		{17-054-693}
+
+\date				{\today}
+
+% switch here for the german logo to logo-de
+\ulogo				{Template/logo-en} 
+
+
+%% ----------------------------------------------------------------
+\begin{document}
+
+% for english use \selectlanguage{english}, for german use \selectlanguage{ngerman}
+\selectlanguage{english}
+
+\thesisfront
+\maketitle
+\pagestyle{thesis}
+%% ----------------------------------------------------------------
+% \input{./Front/Acknowledgment}
+%% ----------------------------------------------------------------
+\input{./Front/Abstract}
+%% ----------------------------------------------------------------
+\thesistoc
+%% ----------------------------------------------------------------
+%\thesisnomencl
+%% ----------------------------------------------------------------
+\thesismain
+\input{./Chapters/Introduction}
+\input{./Chapters/Related_work}
+\input{./Chapters/Designing_the_protocol}
+\input{./Chapters/Implementation}
+%\input{./Chapters/Chapter5}
+%\input{./Chapters/Chapter6}
+%\input{./Chapters/Chapter7}
+%% ----------------------------------------------------------------
+\thesisappendix
+\thesisbib
+\begin{appendices}
+	\input{./Back/AppendixA} 
+\end{appendices}
+%% ----------------------------------------------------------------
+\thesisback
+\input{./Back/DeclarationOfAuthorship}
+%% ----------------------------------------------------------------
+\end{document}
+%% ----------------------------------------------------------------

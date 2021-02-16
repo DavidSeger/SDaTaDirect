@@ -1,0 +1,59 @@
+% !TEX root = ../Thesis.tex
+\chapter{Implementation}
+
+The practical part of this work aims to implement the previously constructed history aware p2p set synchronization protocol in a secure way, it will be a standalone app based on SDaTaDirect. To showcase the synchronization it will provide a similar functionality as discussed in \ref{sec:the_scuttlebutt_protocol}, it will provide the same system of feeds and pubs and the possibility to dynamically add messages to feeds. The goal will be to allow a fast synchronization of these feeds and messages between two devices.
+
+\section{Basic Functionality}
+
+Every device has an associated feed, it gets automatically created and stored in the datbase when the app is started for the first time. In this feed the device can publish messages directly through the app. A user can also create one or more pubs, feeds that simply republish all messages in the private feeds of all devices subscribed to the pub, to subscribe to a pub, a device has to directly connect itself to the pub owner when it wants to subscribe to a pub, after that the pub messages will travel through the p2p network just like any other message in a private feed. A user can not only subscribe to a pub, but also follow private feeds of devices. The app is designed as a proof of concept for the set synchronization protocol, so the functionality of the sets themselves is kept at a minimum. To synchronize one device with another device, and thus forward all messages it has published into the network, the user simply has to securely connect to the partner through the SDataDirect protocol, as described in \ref{sec:SDataDirect}, upon a connection the two devices automatically start the synchronization, without any further user input. The synchronization is done securely by encrypting all packages with the established, peer dependent, AES key pair and signing it with the public key of the sender, as proposed by Gowthaman Gobalasingam in the SDaTaDiret protocol. 
+
+
+\section{Configuring the Database}
+
+The SDaTaDirect app already has a database set up, but because its only use was to save the previously connected peers, the data model remained quite simple, with only one table that includes all needed data. The data is organized in a Room\footnote{https://developer.android.com/jetpack/androidx/releases/room} database. To support the history awareness of the synchronization in a peer-to-peer environment, every device needs to save the state of the last synchronization with any peer locally, as discussed in \ref{sec:Data_Identification}. We created tables to support the feeds and message functionalites, extended the peer table to include the history aware elements and added a way to save which peer is interested in which feeds. in \ref{fig:ER} we can see the design of the database in the form of an ER diagram. One important difference to the original SDaTaApp is the persistent public key, the app checks on start-time if it already posseses a public key, identifying it in the network, if not it will create a key and store it in the database. In the original design, a new public key was created for every new peer. 
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[scale = 0.08]{"ER.png"}
+	\caption{the final ER diagram of the underlying database of the app}
+	\label{fig:ER}
+\end{figure}
+
+\section{Adapting the GUI}
+
+While no changes had to be made to the way devices connect to each other in the app, and therefore no additional interfaces had to be created to initialize the synchronization, the GUI needed to be changed to allow for dynamic content creation, interaction and viewing of the feeds the app has discovered. 
+\\
+\\
+The user can visit its own feed after starting the app on the feed view, as can be seen in \ref{fig:emptyFeed}.
+\clearpage
+\begin{figure}[!h]
+	\centering
+	\includegraphics[scale = 0.1]{"feedViewEmpty.jpg"}
+	\caption{The view of the feeds after the first start, with no discovered feeds or created pubs}
+	\label{fig:emptyFeed}
+\end{figure}
+ 
+When the user clicks on a feed, the app opens up a view of all the messages in the feed that this device has received, if the user is allowed to publish messages in the feed (if the feed belongs to this device), a small text box allows the user to create messages that will be posted in the feed. A user can create as many pubs as they want, inw which any messages published in the private feed of the device owner automatically will be published. 
+\begin{figure}
+	\centering
+	\begin{minipage}{.5\textwidth}
+		\centering
+		\includegraphics[width=.4\linewidth]{"createPub.jpg"}
+		\captionof{figure}{Creating a new pub inside the app}
+		\label{fig:pub1}
+	\end{minipage}%
+	\begin{minipage}{.5\textwidth}
+		\centering
+		\includegraphics[width=.4\linewidth]{"pubView.jpg"}
+		\captionof{figure}{the view inside of the newly created pub, all private messages of every subscribed device will be published here}
+		\label{fig:pub2}
+	\end{minipage}
+\end{figure}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[scale = 0.1]{"privateFeedMessagesPublished.jpg"}
+	\caption{The interface of a feed in which the user is allowed to publish messages}
+	\label{fig:FeedView}
+\end{figure}
+
