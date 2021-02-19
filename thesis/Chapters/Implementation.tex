@@ -65,11 +65,13 @@ The app was set up for a one-time-only data exchange, it opens a TCP socket wher
 
 As previously mentioned, the protocol was implemented as a RFC protocol, There are predefined commands that are transmitted that cause an action to be made in the partners device. Together with any additional arguments that need to be passed to the function, the method call is packed into a JSON object and transformed into a byte array, which then will be forwarded to the communication manager for encryption and signing. An overview of all available method calls can be seen in \ref{tab:methods}
 
-\begin{table}[!h]
+% Please add the following required packages to your document preamble:
+% \usepackage{graphicx}
+\begin{table}[]
 	\resizebox{\textwidth}{!}{%
 		\begin{tabular}{|l|l|l|}
 			\hline
-			Method Call String            & Arguments                                                                                                                                            & Description                                                                                                                                                                                                                                                                                                          \\ \hline
+			\textbf{Method Call String}   & \textbf{Arguments}                                                                                                                                   & \textbf{Description}                                                                                                                                                                                                                                                                                                 \\ \hline
 			SEND\_FEED\_UPDATE            & feedKey: String, Subscribed: Boolean                                                                                                                 & \begin{tabular}[c]{@{}l@{}}Inform the partner of a subscribtion change or newly \\ discovered feed since the last synchronization\end{tabular}                                                                                                                                                                       \\ \hline
 			INQUIRE\_FEED\_DETAILS        & feedKey: String                                                                                                                                      & \begin{tabular}[c]{@{}l@{}}Inquire the details of a feed in case the device hasn't \\ discovered it yet\end{tabular}                                                                                                                                                                                                 \\ \hline
 			ANSWER\_FEED\_QUERY           & \begin{tabular}[c]{@{}l@{}}feedKey: String, type: String, host: String, \\ port: String, subscribed: Boolean, owner: String\end{tabular}             & \begin{tabular}[c]{@{}l@{}}Send all required details to save a new feed, the owner\\ String is a public key of another device, the type can be either\\ Pub or Private\end{tabular}                                                                                                                                  \\ \hline
@@ -84,7 +86,7 @@ As previously mentioned, the protocol was implemented as a RFC protocol, There a
 		\end{tabular}%
 	}
 	\caption{An overview of the available methods that can be used in this implementation of the protocol}
-	\label{tab:methods}
+\label{tab:methods}
 \end{table}
 
 The protocol is mainly implemented in the \textit{SetSynchronization.kt} file, the script is started after every new connection, and can be called programatically at any time by providing the target, the role of the invoking device (master or slave), and the starting point of the protocol (e.g. phase one to four). The file contains all methods that can be called remotely, it also contains a static Hashmap that collects all the feeds where the partner has new messages, this collection gets cycled through in phase three, and for every feed where the device is not up to date, a message range request is sent. The methods largely update or exchange data objects from the database according to the protocol, one thing that had to be changed from the general set synchronization protocol to the specific use of a Scuttlebutt like environment is the special handling of Pubs, since we still have to send updates about feeds that the partner is potentially not interested in, if the feed owner is subscribed to a pub hosted by the partner.
