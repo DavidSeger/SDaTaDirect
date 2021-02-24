@@ -13,7 +13,6 @@ import android.graphics.Bitmap
 import android.net.wifi.p2p.*
 import android.os.*
 import android.provider.Settings
-import android.util.EventLog
 
 import android.util.Log
 import android.view.View
@@ -36,9 +35,11 @@ import unibas.dmi.sdatadirect.database.Self
 import unibas.dmi.sdatadirect.net.wifi.p2p.ConnectionManager
 
 import unibas.dmi.sdatadirect.net.wifi.p2p.WifiP2pDriver
+import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.NaiveSynchronization
 import unibas.dmi.sdatadirect.net.wifi.p2p.protocolUtils.SetSynchronization
 import unibas.dmi.sdatadirect.peer.PeerActivity
 import unibas.dmi.sdatadirect.peer.PeerViewModel
+import unibas.dmi.sdatadirect.statistics.Evaluator
 import unibas.dmi.sdatadirect.utils.QRCode
 
 import java.lang.Exception
@@ -158,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
 
-
+        Evaluator.context = this.applicationContext
         textView = findViewById(R.id.textView)
         listView = findViewById(R.id.peerView)
         discoverableSwitch = findViewById(R.id.discoverableSwitch)
@@ -195,6 +196,8 @@ class MainActivity : AppCompatActivity() {
         peerViewModel = ViewModelProvider(this).get(PeerViewModel::class.java)
         ConnectionManager.peers = peerViewModel
         SetSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel, selfViewModel)
+        NaiveSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel, selfViewModel)
+
 
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)

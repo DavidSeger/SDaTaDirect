@@ -11,6 +11,7 @@ import unibas.dmi.sdatadirect.database.Peer
 import unibas.dmi.sdatadirect.database.PeerInfo
 import unibas.dmi.sdatadirect.net.wifi.p2p.ConnectionManager
 import unibas.dmi.sdatadirect.peer.PeerViewModel
+import unibas.dmi.sdatadirect.statistics.Evaluator
 import unibas.dmi.sdatadirect.utils.PackageFactory
 
 /**
@@ -26,6 +27,8 @@ class SetSynchronization() {
         val TAG = "SetSynchronization"
         var isMaster: Boolean = false
         val availableFeedsByPeer: HashMap<String, ArrayList<String>> = HashMap()
+        var timestamp: Long = 0L
+        var databaseAccessTimes: ArrayList<Long> = ArrayList()
         fun startSynchronization(partner: String) {
             isMaster = true //flag used in communication
             //phase 1: the host of the connection (group owner of the p2p group) starts with updating the client
@@ -61,6 +64,7 @@ class SetSynchronization() {
          * the device asks for full feed information to save it
          */
         fun receiveFeedUpdate(feedkey: String, subscribed: Boolean, peerAddress: String) {
+            Evaluator.packagesReceivedHistoryAware++
             if (feeds.isKnown(feedkey)) {
                 if (!peerInfos.exists(peers.getPeerByWiFiAddress(peerAddress)!!.foreign_public_key!!, feedkey)) {
                     var peerInfo = PeerInfo(
@@ -85,6 +89,7 @@ class SetSynchronization() {
          * ask the peer for the full feed
          */
         private fun inquireFeedDetails(feedkey: String, peerAddress: String) {
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(peerAddress, PackageFactory.inquireFeedDetails(feedkey))
         }
 
@@ -94,6 +99,7 @@ class SetSynchronization() {
          * the feed subscription is an opt-in thing)
          */
         fun receiveFeedInquiry(feedkey: String, peerAddress: String) {
+            Evaluator.packagesReceivedHistoryAware++
             var f = feeds.getFeed(feedkey)
             peerInfos.insert(
                 PeerInfo(
@@ -102,6 +108,7 @@ class SetSynchronization() {
                     isSubscribed = false
                 )
             )
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(peerAddress, PackageFactory.answerFeedInquiry(f))
         }
 
@@ -115,10 +122,12 @@ class SetSynchronization() {
             //send for all changed feeds a package notifying the sync partner (if this is
             //the first time connecting with the partner, the last Sync variable is 0, so it
             //will get all feeds)
+            timestamp = System.currentTimeMillis()
             var lastSync = peers.getLastSync(peers.getPeerByWiFiAddress(receiver)!!.foreign_public_key!!)
             var myFeeds = feeds.getAllChangedSinceTimestamp(lastSync!!)
             Log.d(TAG, myFeeds.size.toString())
             for (f in myFeeds) {
+                Evaluator.packagesSentHistoryAware++
                 ConnectionManager.sendPackage(receiver, PackageFactory.sendFeedUpdate(f))
             }
             sendEndPhaseOneFlag(receiver)
@@ -133,8 +142,11 @@ class SetSynchronization() {
             subscribed: Boolean,
             sender: String
         ) {
+            Evaluator.packagesReceivedHistoryAware++
             feed.subscribed = false
+            var insertiontime: Long = System.currentTimeMillis()
             feeds.insert(feed)
+            databaseAccessTimes.add(System.currentTimeMillis() - insertiontime)
             /**
              * we dont know the owner of this peer, meaning we insert it into our Peer database
              */
@@ -161,6 +173,7 @@ class SetSynchronization() {
          * giving the control to it to send its updates.
          */
         private fun sendEndPhaseOneFlag(receiver: String) {
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(receiver, PackageFactory.endPhaseOne())
         }
 
@@ -170,6 +183,7 @@ class SetSynchronization() {
          * phase 2, if it is the passive partner, this starts the feed update process for this device
          */
         fun receiveEndPhaseOne(sender: String) {
+            Evaluator.packagesReceivedHistoryAware++
             if (!isMaster) {
                 sendFeedUpdates(sender)
             } else {
@@ -198,6 +212,7 @@ class SetSynchronization() {
                     var fLastSeq = messages.getNewestMessage(f.feed_key)
                     if (f.lastSentMessage < fLastSeq) {
                         Log.d("packageFactory", "sent From First loop")
+                        Evaluator.packagesSentHistoryAware++
                         ConnectionManager.sendPackage(
                             partner,
                             PackageFactory.sendSeqNr(f.feed_key, fLastSeq)
@@ -213,11 +228,11 @@ class SetSynchronization() {
                  for (p in feeds.getPubsByHostDevice(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!)) {
                         if (peerInfos.isSubscribed(f.owner!!, p.key)){
                             if (!peerInfos.isSubscribed(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!, f.key)){
-                                var all = peerInfos.getAll()
                                 var fLastSeq = messages.getNewestMessage(f.key)
                                 var lastSent = peerInfos.get(f.owner!!, p.key).lastSentMessage
                                 if (lastSent < fLastSeq) {
                                     Log.d("packageFactory", "sent From second loop")
+                                    Evaluator.packagesSentHistoryAware++
                                     ConnectionManager.sendPackage(
                                         partner,
                                         PackageFactory.sendSeqNr(f.key, fLastSeq)
@@ -240,6 +255,7 @@ class SetSynchronization() {
          * a temporary hash map
          */
         fun receiveFeedUpdateList(sender: String, feedKey: String?, lastSeq: Long) {
+            Evaluator.packagesReceivedHistoryAware++
             if (availableFeedsByPeer.containsKey(sender)) {
                 var feedList = availableFeedsByPeer.get(sender)
                 feedList!!.add(feedKey!! + "::" + lastSeq)
@@ -254,6 +270,7 @@ class SetSynchronization() {
          * end this phase of the protocol for this device
          */
         private fun sendEndPhaseTwoFlag(receiver: String) {
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(receiver, PackageFactory.endPhaseTwo())
         }
 
@@ -263,6 +280,7 @@ class SetSynchronization() {
          * phase 3, if it is the passive partner, this starts the message offering process for this device
          */
         fun receiveEndPhaseTwo(sender: String) {
+            Evaluator.packagesReceivedHistoryAware++
             if (!isMaster) {
                 sendFeedsWithNews(sender)
             } else {
@@ -286,6 +304,7 @@ class SetSynchronization() {
                         var mostRecentSeqPeer: Long = f.split("::")[1].toLong()
                         var lastReceivedSeqFeed: Long = feed.last_received_message_seq
                         if (lastReceivedSeqFeed < mostRecentSeqPeer) {
+                            Evaluator.packagesSentHistoryAware++
                             ConnectionManager.sendPackage(
                                 sender,
                                 PackageFactory.sendMessageRangeRequest(
@@ -306,6 +325,7 @@ class SetSynchronization() {
          * end the phase three for this device
          */
         private fun sendEndPhaseThreeFlag(sender: String) {
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(sender, PackageFactory.endPhaseThree())
         }
 
@@ -314,8 +334,10 @@ class SetSynchronization() {
          * starting from the newest message the partner has in its feed
          */
         fun receiveRangeMessageRequest(sender: String, feedKey: String?, lowerLimit: Long) {
+            Evaluator.packagesReceivedHistoryAware++
             var msgs = messages.getNewMessages(feedKey!!, lowerLimit)
             for (m in msgs) {
+                Evaluator.packagesSentHistoryAware++
                 ConnectionManager.sendPackage(sender, PackageFactory.sendMessage(m))
             }
         }
@@ -327,12 +349,16 @@ class SetSynchronization() {
          * We also update the peer info to reflect the last messages of the pub that we have sent to the peer
          */
         fun receiveMessage(receivedMessage: Message, sender: String) {
+            Evaluator.packagesReceivedHistoryAware++
+            var insertiontime: Long = System.currentTimeMillis()
             messages.insert(receivedMessage)
+            databaseAccessTimes.add(System.currentTimeMillis() - insertiontime)
             feeds.updateLastReceivedMessage(messages.getNewestMessage(receivedMessage.feed_key!!), receivedMessage.feed_key!!)
             var myPubs = feeds.getPubsByHostDevice(self.getSelf().pubKey!!)
             if (myPubs != null) {
                 for (f in myPubs) {
                     if (peerInfos.isSubscribed(receivedMessage.publisher, f.key)) {
+                        var insertiontimeTwo: Long = System.currentTimeMillis()
                         var helpMessage = Message(
                             message_id = 0,
                             sequence_Nr = messages.getNewestMessage(f.key) + 1,
@@ -343,7 +369,9 @@ class SetSynchronization() {
                             publisher = receivedMessage.publisher
                         )
                         messages.insert(helpMessage)
+                        databaseAccessTimes.add(System.currentTimeMillis() - insertiontimeTwo)
                         if(peerInfos.isSubscribed(peers.getPeerByWiFiAddress(sender)!!.foreign_public_key!!, f.key)) {
+                            Evaluator.packagesSentHistoryAware++
                             ConnectionManager.sendPackage(
                                 sender,
                                 PackageFactory.sendPubUpdate(helpMessage)
@@ -361,6 +389,7 @@ class SetSynchronization() {
          * phase 4, if it is the passive partner, this starts the message update process for this device
          */
         fun receiveEndPhaseThree(sender: String) {
+            Evaluator.packagesReceivedHistoryAware++
             if (!isMaster) {
                 requestFullFeedUpdates(sender)
             } else {
@@ -373,7 +402,10 @@ class SetSynchronization() {
          * sent message to reflect that we have forwarded the message from Feed X to pub Y
          */
         fun receivePubUpdate(receivedMessage: Message, sender: String) {
+            Evaluator.packagesReceivedHistoryAware++
+            var insertiontime: Long = System.currentTimeMillis()
             messages.insert(receivedMessage)
+            databaseAccessTimes.add(System.currentTimeMillis() - insertiontime)
             peerInfos.updateLastSentMessage(peers.getPeerByWiFiAddress(sender)!!.foreign_public_key!!, receivedMessage.feed_key!!, messages.getNewestMessage(receivedMessage.feed_key!!))
         }
 
@@ -383,7 +415,15 @@ class SetSynchronization() {
          * receive a timestamp sync message, safe the last sync time with this device.
          */
         fun receiveLastSync(partner: String, lastSync: Long) {
+            Evaluator.packagesReceivedHistoryAware++
             peers.setLastSync(peers.getPeerByWiFiAddress(partner)!!.foreign_public_key!!, lastSync)
+            if (NaiveSynchronization.done){
+                Evaluator.syncTimeHistoryAware = System.currentTimeMillis() - timestamp
+                for (t in databaseAccessTimes){
+                    Evaluator.syncTimeHistoryAware -= t
+                }
+                Evaluator.evaluate()
+            }
         }
 
 
@@ -393,6 +433,7 @@ class SetSynchronization() {
         private fun sendLastSync(receiver: String) {
             var lastSync = System.currentTimeMillis()
             peers.setLastSync(peers.getPeerByWiFiAddress(receiver)!!.foreign_public_key!!, lastSync)
+            Evaluator.packagesSentHistoryAware++
             ConnectionManager.sendPackage(receiver, PackageFactory.sendLastSync(lastSync))
         }
 

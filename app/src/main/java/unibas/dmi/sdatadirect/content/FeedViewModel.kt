@@ -56,6 +56,10 @@ class FeedViewModel(application: Application): AndroidViewModel(application) {
         repository.updateLastReceivedMessage(seqNr, feedKey)
     }
 
+    fun getAllSubscribed():Array<Feed>{
+        return repository.getAllSubscribed()
+    }
+
     fun getFeedByOwner(ownerKey: String): Feed{
         return repository.getFeedByOwner(ownerKey)
     }
