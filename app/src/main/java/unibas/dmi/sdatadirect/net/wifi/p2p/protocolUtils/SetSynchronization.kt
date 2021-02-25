@@ -298,6 +298,7 @@ class SetSynchronization() {
         private fun requestFullFeedUpdates(sender: String) {
             var feedsOfPeer = availableFeedsByPeer.get(sender)
             if (feedsOfPeer != null) {
+                var removeableFeeds = ArrayList<String>()
                 for (f in feedsOfPeer!!) {
                     if(feeds.getFeed(f.split("::")[0]).type != "pub" || feeds.getFeed(f.split("::")[0]).owner != self.getSelf().pubKey) {
                         var feed = feeds.getFeed(f.split("::")[0])
@@ -315,8 +316,9 @@ class SetSynchronization() {
 
                         }
                     }
-                    feedsOfPeer.remove(f)
+                    removeableFeeds.add(f)
                 }
+                feedsOfPeer.removeAll(removeableFeeds)
             }
             sendEndPhaseThreeFlag(sender)
         }

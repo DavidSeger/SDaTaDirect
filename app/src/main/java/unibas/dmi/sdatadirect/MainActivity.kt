@@ -199,6 +199,7 @@ class MainActivity : AppCompatActivity() {
         NaiveSynchronization.setup(peerViewModel, peerInfoViewModel, feedViewModel, messageViewModel, selfViewModel)
 
 
+
         peersBtn.setOnClickListener {
             val intent = Intent(this, PeerActivity::class.java)
             startActivity(intent)
